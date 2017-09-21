@@ -5,9 +5,9 @@
     <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
     <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
     <title>Hyscan</title>
-    <link rel="stylesheet" type="text/css" href="../css/api.css"/>
-    <link rel="stylesheet" type="text/css" href="../css/style.css"/>
-    <link rel="stylesheet" type="text/css" href="../css/index.css" />
+    <link rel="stylesheet" type="text/css" href="./css/api.css"/>
+    <link rel="stylesheet" type="text/css" href="./css/style.css"/>
+    <link rel="stylesheet" type="text/css" href="css/index.css" />
 </head>
 <body>
 	<div class="title">
@@ -16,7 +16,7 @@
 	</div>
 	<ul class="steps">
 		<li>
-			<img src="../img/step01.png" />
+			<img src="img/step01.png" />
 			<div class="txt01">
 				<span class="tag">Step-1</span>
 				<p>开启设备开关</p>
@@ -25,7 +25,7 @@
 			</div>
 		</li>
 		<li>
-			<img src="../img/step02.png" />
+			<img src="img/step02.png" />
 			<div class="txt01">
 				<span class="tag">Step-2</span>
 				<p>点击开始采集按钮</p>
@@ -34,7 +34,7 @@
 			</div>
 		</li>
 		<li>
-			<img src="../img/step03.png" />
+			<img src="img/step03.png" />
 			<div class="txt01">
 				<span class="tag">Step-3</span>
 				<p>查看并保存检测</p>
@@ -46,11 +46,11 @@
 	<div class="footer">
 		<ul>
 			<li class="f_map" onclick="gotoMap( this );">地图</li>
-			<li class="f_scan" onclick="beginCollect( this );">
+			<li class="f_scan" onclick="beginScan( this );">
 				扫描
 			</li>
 			<li class="f_me" onclick="gotoMe( this );">我</li>
-			<img src="../img/icon_selected.png" class="sel"/>
+			<img src="img/icon_selected.png" class="sel"/>
 		</ul>
 	</div>
 	<!-- 是否扫描 -->
@@ -63,9 +63,9 @@
 	</div>
 </body>
 </html>
-<script type="text/javascript" src="../script/api.js"></script>
-<script type="text/javascript" src="../script/app.js"></script>
-<script type="text/javascript" src="../script/device.js"></script>
+<script type="text/javascript" src="script/api.js"></script>
+<script type="text/javascript" src="script/app.js"></script>
+<script type="text/javascript" src="script/device.js"></script>
 <script>
     apiready = function () {
         //$api.fixStatusBar( $api.dom('.title') );
@@ -76,23 +76,20 @@
         // });
         //检测是否绑定蓝牙设备如果绑定
         stDevice.isDeviceOk(function(ret){
-            console.log(JSON.stringify(ret));
             if (ret.status) {
                 console.log(JSON.stringify(ret.device));
             } else {
-                setTimeout(gotoScanDevice, 1000);
-                //gotoScanDevice();
+                gotoScanDevice();
             }
         });
 
-        api.addEventListener({
-            name: 'keyback'
-        }, function(ret, err) {
-        });
+
+
 
     }
 
     $api.addEvt($api.dom('.btn_logo'), 'click', function(){
+      console.log("a");
       api.openDrawerPane({
           type: 'left'
         });
@@ -100,43 +97,31 @@
 
 
     function gotoMap(){
-      api.alert({
-          title: '敬请期待',
-          msg: '开发中',
-      }, function(ret, err){
-          // if( ret ){
-          //      alert( JSON.stringify( ret ) );
-          // }else{
-          //      alert( JSON.stringify( err ) );
-          // }
-      });
 
-      return;
-      api.openWin({
-          name: 'map',
-          url: 'map.html'
-      });
     }
 
     function gotoMe(){
-        api.openWin({
-            name: 'my',
-            url: 'my.html'
-        });
+
     }
 
-    function beginCollect(){
+    function beginScan(){
         //scaner.beginScan();//发送开始扫描命令
         api.openWin({
-            name: 'collect',
-            url: './collect.html'
+            name: 'scaning',
+            url: './html/scaning.html',
+            pageParam: {
+                name: 'test'
+            }
         });
     }
 
     function gotoScanDevice(){
         api.openWin({
             name: 'connect',
-            url: 'connect.html'
+            url: './html/connect.html',
+            pageParam: {
+                name: 'test'
+            }
         });
     }
 </script>

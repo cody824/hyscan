@@ -1,13 +1,8 @@
- <widget id="A6050909206139"  version="0.0.1">
-    <name>hyscan</name>
-    <description>
-        Example For APICloud.
-    </description>
-    <author email="developer@apicloud.com" href="http://www.apicloud.com">
-        Developer
-    </author>
+ <widget id="A6050909206139"  version="0.0.1">    <!-- <meta-data android:name="com.amap.api.v2.apikey" android:value="key" >1d4b88592ed780ec061d4fb7a12a32d1</meta-data> -->    <name>hyscan</name>
+    <description>    </description>
+    <author email="noknown@163.com" href="http://www.cnblogs.com/gdtec/">        noknown    </author>
     <content src="index.html" />
-    <access origin="*" />
+    <access origin="*" />    <!-- -->
     <preference name="pageBounce" value="false"/>
 	<preference name="appBackground" value="rgba(0,0,0,0.0)"/>
 	<preference name="windowBackground" value="rgba(0,0,0,0.0)"/>
@@ -27,5 +22,5 @@
 	<permission name="fileSystem" />
 	<permission name="internet" />
 	<permission name="bootCompleted" />
-	<permission name="hardware" />
+	<permission name="hardware" />  <feature name="bMap">    <param name="android_api_key" value="NHaFtpNzoMA7nSG6t5HG3NZYYiOi5uq5" />  </feature>
 </widget>

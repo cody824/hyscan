@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+    <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+    <link rel="stylesheet" type="text/css" href="../css/api.css"/>
+    <link rel="stylesheet" type="text/css" href="../css/style.css"/>
+    <link rel="stylesheet" type="text/css" href="../css/index.css" />
+	    <title>登录</title>
+		<style>
+        	::-webkit-input-placeholder { /* WebKit browsers */
+			 color:#fff;
+			}
+			:-moz-placeholder { /* Mozilla Firefox 4 to 18 */
+			 color:#fff;
+			 opacity:1;
+			}
+			::-moz-placeholder { /* Mozilla Firefox 19+ */
+			 color:#fff;
+			 opacity:1;
+			}
+			:-ms-input-placeholder { /* Internet Explorer 10+ */
+			 color:#fff;
+			}
+
+		</style>
+	</head>
+	<body>
+		<img src="../img/login_bg.jpg" class="login_bg" />
+		<img src="../img/login_logo.png" class="logo" />
+		<div class="login_con">
+			<input type="txt" class="name" placeholder="请输入用户名" />
+			<input type="password" class="pwd" placeholder="请输入密码" />
+		</div>
+		<div style="width: 100%; height: auto; overflow: hidden; position: relative; z-index: 99;">
+			<a class="login_btn login" id="loginBtn" href="#">登 录</a>
+	        <p class="pass_forget">忘记密码？</p>
+	        <a class="login_btn register" href="register.html">注 册</a>
+		</div>
+
+		<div class="login_methods">
+			<span>第三方登录</span>
+			<span>
+				<img src="../img/icon_qq.png" />
+			</span>
+			<span>
+				<img src="../img/icon_wechat.png" />
+			</span>
+			<span>
+				<img src="../img/icon_weibo.png" />
+			</span>
+		</div>
+
+	</body>
+</html>
+<script type="text/javascript" src="../script/api.js"></script>
+<script type="text/javascript" src="../script/app.js"></script>
+<script>
+
+		$api.addEvt($api.dom('#loginBtn'), 'click', function(){
+				var userName = $api.val($api.dom('input.name'));
+				var password = $api.val($api.dom('input.pwd'));
+				login(userName, password, function(ret, err){
+						if (ret.status) {
+							api.openDrawerLayout({
+									name :'main',
+									url: 'main.html',
+									animation : {
+											type:"none",                //动画类型（详见动画类型常量）
+											subType:"from_left",       //动画子类型（详见动画子类型常量）
+											duration:300                //动画过渡时间，默认300毫秒
+									},
+									leftPane: {
+											edge: api.winWidth * 0.4,
+											name: 'slider',
+											url: 'slider.html'
+									}
+							}, function(ret, err) {
+
+							});
+						} else {
+								api.alert({
+								    title: '登录错误',
+								    msg: err.msg,
+								}, function(ret, err){
+								});
+
+						}
+				})
+		});
+</script>

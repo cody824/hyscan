@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0" />
+    <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+    <title>Hyscan</title>
+    <link rel="stylesheet" type="text/css" href="../css/api.css" />
+    <link rel="stylesheet" type="text/css" href="../css/style.css" />
+    <link rel="stylesheet" type="text/css" href="../css/index.css" />
+</head>
+
+<body>
+    <!-- 侧登陆模块 -->
+    <div class="sidebar">
+        <div class="s_left">
+            <div class="head">
+                <img src="../img/head.png" class="h_img"/> <span id="gotoLogin" data-status="logout">点击登录</span>
+            </div>
+            <ul class="nav">
+                <li>
+                    <span id='setup'>系统设置</span>
+                </li>
+                <li>
+                    <span id='deviceInfo'>设备信息</span>
+                </li>
+                <li>
+                    <span id='about'>关于HyScan</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</body>
+
+</html>
+<script type="text/javascript" src="../script/api.js"></script>
+<script type="text/javascript" src="../script/app.js"></script>
+<script>
+    $api.addEvt($api.dom('#setup'), 'click', function() {
+        api.openWin({
+            name: 'setup',
+            url: './setup.html'
+        });
+
+    });
+
+    $api.addEvt($api.dom('#deviceInfo'), 'click', function() {
+        api.openWin({
+            name: 'equipment',
+            url: './equipment.html'
+        });
+    });
+
+    $api.addEvt($api.dom('#about'), 'click', function() {
+        api.alert({
+            title: 'HyScan',
+            msg: '光谱分析仪V1.0',
+        }, function(ret, err) {
+
+        });
+    });
+
+    $api.addEvt($api.dom('#gotoLogin'), 'click', function() {
+      var status =   $api.attr($api.dom('#gotoLogin'), "data-status");
+      if (status == 'logout'){
+          api.openWin({
+              name: 'login',
+              url: './login.html'
+          });
+      } else {
+        api.confirm({
+            title: '注销',
+            msg: '确定要退出登录吗？',
+            buttons: ['确定', '取消']
+        }, function(ret, err){
+            if (ret.buttonIndex == 1) {
+                logout(function(){
+                    window.location.reload();
+                });
+            }
+        });
+
+      }
+    });
+
+    apiready = function() {
+          if (!isLoad) loadAppConfig();
+          if (appConfig.isLogin){
+              $api.text($api.dom('#gotoLogin'), appConfig.loginName);
+              $api.attr($api.dom('#gotoLogin'), "data-status", "login");
+          } else {
+              $api.attr($api.dom('#gotoLogin'), "data-status", "logout");
+              $api.text($api.dom('#gotoLogin'), "点击登录");
+          }
+    }
+</script>

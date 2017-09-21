@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0" />
+	<meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+	<link rel="stylesheet" type="text/css" href="../css/api.css" />
+	<link rel="stylesheet" type="text/css" href="../css/style.css" />
+	<link rel="stylesheet" type="text/css" href="../css/index.css" />
+	<title>设置</title>
+</head>
+
+<body>
+	<div class="title">
+		<span class="btn_logo">
+				<img src="../img/left_arrow.png" />
+			</span> 设置
+	</div>
+	<ul class="set-box">
+		<li class="clearfix li1">
+			<span class="small-ico"></span>
+			<span class="ico-name">绑定设备</span>
+			<span class="btn" id='unbunding'>解绑</span>
+			<span class="ico-info">已绑定</span>
+		</li>
+		<li class="clearfix jf" id="periodLi">
+			<span class="small-ico ico2"></span>
+			<span class="ico-name">积分时间</span>
+			<span class="ico-info ico-info2"><span id="period">500</span>ms</span>
+		</li>
+		<li class="clearfix cj" id="collectNumLi">
+			<span class="small-ico ico3"></span>
+			<span class="ico-name">平均采集次数</span>
+			<span class="ico-info ico-info3"><span id="collectNum">5</span>次</span>
+		</li>
+		<li class="clearfix" id='paramSetupLi'>
+			<span class="small-ico ico4"></span>
+			<span class="ico-name">光谱定标设置</span>
+			<span class="ico-info"></span>
+		</li>
+	</ul>
+
+</body>
+
+</html>
+<script type="text/javascript" src="../script/api.js"></script>
+<script type="text/javascript" src="../script/app.js"></script>
+<script type="text/javascript" src="../script/device.js"></script>
+<script>
+	var dialogBox;
+	var uiLoading;
+	var inputField;
+	apiready = function() {
+		dialogBox = api.require('dialogBox');
+		uiLoading = api.require('UILoading');
+		inputField = api.require('inputField');
+
+
+	}
+
+	$api.addEvt($api.dom('.btn_logo'), 'click', function(){
+				api.historyBack({
+				},function(ret,err){
+				    if(!ret.status){
+				        api.closeWin();
+				    }
+				});
+	});
+
+	$api.addEvt($api.dom('#paramSetupLi'), 'click', function(){
+				api.openWin({
+				    name: 'revise',
+				    url: './revise.html'
+				});
+
+	});
+
+
+	$api.addEvt($api.dom('#unbunding'), 'click', function(){
+		dialogBox.confirm({
+				tapClose: false,
+				msg: {
+						content:'确认要解绑设备吗',
+						leftBtnTitle: '取消',
+						rightBtnTitle:'确定'
+				},
+				styles: {
+			 bg: '#fff',
+			 maskBg:'rgba(0,0,0,0.5)',
+			 h: 200,
+			 msg :{
+					 color : '#00DEFF',
+					 size  : 20,
+					 maginLR: 100 ,
+					 maginT: 50
+			 },
+			 leftBtn :{
+					 borderColor: 'rgba(0,0,0,0)',
+					 color: '#007FFF',
+					 size: 14
+			 },
+			 rightBtn :{
+					 bg: 'rgba(0,0,0,0)',
+					 selectedBg:'#F00',
+					 color: '#007FFF',
+					 size: 14
+			 }
+	 }
+			}, function(ret) {
+    			console.log(JSON.stringify(ret));
+					dialogBox.close({
+					    dialogName: 'confirm'
+					});
+					if (ret.eventType == "ok") {
+							stDevice.removeDevice();
+							api.historyBack({
+							},function(ret,err){
+							    if(!ret.status){
+							        api.closeWin();
+							    }
+							});
+
+					}
+		});
+	});
+	$api.addEvt($api.dom('#periodLi'), 'click', function(){
+			var num = $api.text($api.dom('#period'));
+			setupPeriod(num);
+	});
+	$api.addEvt($api.dom('#collectNumLi'), 'click', function(){
+			var num = $api.text($api.dom('#collectNum'));
+			setupCollectNum(num);
+	});
+
+	function setupCollectNum(current) {
+		dialogBox.input({
+			keyboardType: 'number',
+			texts: {
+				title: '平均采集次数',
+				default : current,
+				placeholder: '请输入0-10的数字',
+				leftBtnTitle: '取消',
+				rightBtnTitle: '确定'
+			},
+			styles: dialogStyles ,
+			tapClose: true
+		}, function(ret) {
+			console.log(JSON.stringify(ret));
+			dialogBox.close({
+				dialogName: 'input'
+			});
+
+			if (ret.eventType == 'left') {
+				// doSaveLocal(ret.text);
+			} else if (ret.eventType == 'right') {
+				// doSaveRemote(ret.text);
+				 $api.text($api.dom('#collectNum'), ret.text);
+			}
+		});
+	}
+
+	function setupPeriod(current) {
+		dialogBox.input({
+			keyboardType: 'number',
+			texts: {
+				title: '积分时间（ms）',
+				default : current,
+				placeholder: '单位毫秒',
+				leftBtnTitle: '取消',
+				rightBtnTitle: '确定'
+			},
+			styles: dialogStyles ,
+			tapClose: true
+		}, function(ret) {
+			console.log(JSON.stringify(ret));
+			dialogBox.close({
+				dialogName: 'input'
+			});
+
+			if (ret.eventType == 'left') {
+				// doSaveLocal(ret.text);
+			} else if (ret.eventType == 'right') {
+				// doSaveRemote(ret.text);
+				 $api.text($api.dom('#period'), ret.text);
+			}
+		});
+	}
+
+var dialogStyles = {
+	bg: '#fff',
+	corner: 10,
+	w: 300,
+	h: 140,
+	title: {
+		h: 60,
+		alignment: 'center',
+		size: 16,
+		color: '#00DEFF'
+	},
+	input: {
+		h: 60,
+		marginT: 6,
+		textSize: 14,
+		textColor: '#000'
+	},
+	dividingLine: {
+		width: 0,
+		color: '#696969'
+	},
+	left: {
+		bg: 'rgba(0,0,0,0)',
+		color: '#00DEFF',
+		size: 12
+	},
+	right: {
+		bg: 'rgba(0,0,0,0)',
+		color: '#00DEFF',
+		size: 12
+	},
+};
+
+</script>

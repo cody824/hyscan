@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0" />
+	<meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+	<title>结果</title>
+	<link rel="stylesheet" type="text/css" href="../css/api.css" />
+	<link rel="stylesheet" type="text/css" href="../css/style.css" />
+	<link rel="stylesheet" type="text/css" href="../css/index.css" />
+	<style>
+		::-webkit-input-placeholder {
+			/* WebKit browsers */
+			color: #999;
+		}
+
+		:-moz-placeholder {
+			/* Mozilla Firefox 4 to 18 */
+			color: #999;
+			opacity: 1;
+		}
+
+		::-moz-placeholder {
+			/* Mozilla Firefox 19+ */
+			color: #999;
+			opacity: 1;
+		}
+
+		:-ms-input-placeholder {
+			/* Internet Explorer 10+ */
+			color: #999;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="r_banner">
+		<div class="pie">
+			<img src="../img/img_pie.png" />
+			<div class="r_txt">
+				<span class="p1">二级老化</span>
+				<p class="p2">金属材质</p>
+			</div>
+		</div>
+	</div>
+	<ul class="r_tab">
+		<li class="press" data-property="dn">DN值</li>
+		<li data-property="radiance">辐亮度</li>
+		<li data-property="reflectivity">反射率</li>
+		<li data-property="rmPacketLine">除去包格线</li>
+	</ul>
+
+	<div class="chart" id="chart" style="height:200px;">
+
+	</div>
+
+	<div class="rbtn save">
+		<img src="../img/btn_baocun.png" />
+		<span>保存数据</span>
+	</div>
+	<div class="rbtn cancel">
+		<a href="javascript:;"><img src="../img/btn_saomiao.png" /></a>
+		<span>继续扫描</span>
+	</div>
+</body>
+
+</html>
+<script type="text/javascript" src="../script/api.js"></script>
+<script type="text/javascript" src="../script/dp.js"></script>
+<script type="text/javascript" src="../script/echarts.js"></script>
+<script>
+	var uiLoading;
+	var dialogBox;
+	var myChart;
+	var chartData;
+	var properties = $api.domAll('.r_tab li');
+
+	var i;
+	for (i = 0; i < properties.length; i++) {
+		var el = properties[i];
+		$api.addEvt(el, 'click', function() {
+			var j;
+			for (j = 0; j < properties.length; j++) {
+				$api.removeCls(properties[j], 'press');
+			}
+			$api.addCls(this, 'press');
+			var property = $api.attr(this, 'data-property');
+			console.log(property);
+			initChat(property);
+		});
+	}
+
+	$api.addEvt($api.dom('.cancel'), 'click', function() {
+		api.openDrawerLayout({
+				name :'main',
+				url: 'main.html',
+				animation : {
+						type:"none",                //动画类型（详见动画类型常量）
+						subType:"from_left",       //动画子类型（详见动画子类型常量）
+						duration:300                //动画过渡时间，默认300毫秒
+				},
+				leftPane: {
+						edge: api.winWidth * 0.4,
+						name: 'slider',
+						url: 'slider.html'
+				}
+		}, function(ret, err) {
+
+		});
+	});
+
+	$api.addEvt($api.dom('.save'), 'click', function() {
+		dialogBox.input({
+			keyboardType: 'default',
+			texts: {
+				title: '设备名称',
+				placeholder: '请输入所扫描设备名称',
+				leftBtnTitle: '保存本地',
+				rightBtnTitle: '保存云端'
+			},
+			styles: {
+				bg: '#fff',
+				corner: 10,
+				w: 300,
+				h: 140,
+				title: {
+					h: 60,
+					alignment: 'center',
+					size: 16,
+					color: '#00DEFF'
+				},
+				input: {
+					h: 60,
+					marginT: 6,
+					textSize: 14,
+					textColor: '#000'
+				},
+				dividingLine: {
+					width: 0,
+					color: '#696969'
+				},
+				left: {
+					bg: 'rgba(0,0,0,0)',
+					color: '#00DEFF',
+					size: 12
+				},
+				right: {
+					bg: 'rgba(0,0,0,0)',
+					color: '#00DEFF',
+					size: 12
+				},
+			},
+			tapClose: true
+		}, function(ret) {
+			console.log(JSON.stringify(ret));
+			dialogBox.close({
+				dialogName: 'input'
+			});
+
+			if (ret.eventType == 'left') {
+				doSaveLocal(ret.text);
+			} else if (ret.eventType == 'right') {
+				doSaveRemote(ret.text);
+			}
+		});
+	});
+
+	apiready = function() {
+		$api.attr($api.dom('.chart'), 'width', api.winWidth);
+		$api.attr($api.dom('.chart'), 'height', api.winWidth * 2 / 3);
+		myChart = echarts.init(document.getElementById('chart'));
+		var property = $api.attr($api.dom('.r_tab .press'), 'data-property');
+
+		dialogBox = api.require('dialogBox');
+		uiLoading = api.require('UILoading');
+		chartData = api.pageParam.datas;
+
+		initChat(property);
+	}
+
+	function initChat(property) {
+		var showConfig = {};
+		var datas = chartData;
+		showConfig.formatter = "波长：{b}nm <br/> {a} : {c}";
+		switch (property) {
+			case 'dn':
+				showConfig.title = "DN值";
+				break;
+			case 'radiance':
+				showConfig.title = "辐亮度";
+				datas = DPTool.getRadiance(datas);
+				break;
+			case 'reflectivity':
+				showConfig.title = "反射率";
+				showConfig.formatter = "波长：{b}nm <br/> {a} : {c}%";
+				datas = DPTool.getReflectivity(datas);
+				break;
+			case 'rmPacketLine':
+				showConfig.title = "除去包格线";
+				datas = DPTool.getRmPacketLine(datas);
+				break;
+			default:
+
+		}
+
+		// 指定图表的配置项和数据
+		var option = {
+			grid: {
+				left:40,
+				top: 5,
+				right: 0,
+				bottom: 40,
+				borderWidth: 1
+			},
+			title: {
+				show : false,
+				text: showConfig.title,
+				textStyle: {
+					color: '#00DEFF',
+					align: 'left',
+				},
+				padding: 5,
+				itemGap: 0
+			},
+			tooltip: {
+				trigger: 'axis',
+				formatter: showConfig.formatter
+			},
+			xAxis: {
+				data: DPTool.getXAxis(),
+				name: '波长(nm)',
+				nameLocation: 'middle',
+				nameGap: '30',
+				nameTextStyle: {
+					color: '#00DEFF'
+				},
+				axisTick: {
+					lineStyle: {
+						color: '#E1E1E1'
+					}
+				},
+				axisLine: {
+					show: false
+				},
+				axisLabel: {
+					color: '#666666'
+				}
+			},
+			yAxis: {
+				formatter: '{value}%',
+				axisLine: {
+					show: false
+				},
+				axisTick: false,
+				axisLabel: {
+					color: '#666666'
+				}
+			},
+			series: [{
+				name: showConfig.title,
+				type: 'line',
+				lineStyle: {
+					normal: {
+						color: '#00DEFF',
+					}
+				},
+				smooth: true,
+				showSymbol: false,
+				data: datas
+			}]
+		};
+		// 使用刚指定的配置项和数据显示图表。
+		myChart.setOption(option);
+	}
+
+	function doSaveLocal(title) {
+		uiLoading.keyFrame({
+			rect: {
+				w: 80,
+				h: 100
+			},
+			styles: {
+				bg: 'rgba(0,0,0,0.5)',
+				corner: 5,
+				interval: 50,
+				frame: {
+					w: 80,
+					h: 80
+				}
+			}
+		}, function(ret) {
+			console.log(JSON.stringify(ret));
+		});
+		setTimeout(function() {
+			api.toast({
+				msg: '保存成功',
+				duration: 2000,
+				location: 'top'
+			});
+			uiLoading.closeKeyFrame();
+		}, 1000)
+
+
+	}
+
+	function doSaveRemote(title) {
+		doSaveLocal(title);
+	}
+</script>

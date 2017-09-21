@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+    <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+    <link rel="stylesheet" type="text/css" href="../css/api.css"/>
+    <link rel="stylesheet" type="text/css" href="../css/style.css"/>
+    <link rel="stylesheet" type="text/css" href="../css/index.css" />
+		<title>地图</title>
+	</head>
+	<body>
+	</body>
+</html>
+<!-- <script type="text/javascript" src="../script/api.js"></script> -->
+<script type="text/javascript" src="../script/dp.js"></script>
+<script>
+		var map;
+
+		apiready = function(){
+				map = api.require('bMap');
+				openMap();
+		}
+
+		function openMap(){
+			map.open({
+			    // rect: {
+			    //     x: 0,
+			    //     y: 0,
+			    //     w: 320,
+			    //     h: 300
+			    // },
+			    center: {
+			        lon: 116.4021310000,
+			        lat: 39.9994480000
+			    },
+			    zoomLevel: 10,
+			    showUserLocation: true,
+			    fixedOn: api.frameName,
+			    fixed: true
+			}, function(ret, err) {
+					console.log(JSON.stringify(ret));
+						console.log(JSON.stringify(err));
+			    if (ret.status) {
+			        alert('地图打开成功');
+			    }
+			});
+		}
+</script>
