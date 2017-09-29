@@ -51,14 +51,12 @@
 			        </div>
 				</div>
 				<ul class="b_list">
-					<li>便携式手持光谱仪V1.01</li>
-					<li>OPPO R11.01</li>
-					<li>HUAWEI P10</li>
 				</ul>
 			</div>
 			<div class="b_bottom">
 
 			</div>
+			<div><button id="sendData">发送数据</button></div>
 		</div>
 		<script>
 
@@ -70,7 +68,7 @@
 <script type="text/javascript" src="../script/app.js"></script>
 <script type="text/javascript" src="../script/device.js"></script>
 <script type="text/javascript">
-		var currentDevices;
+		var currentDevices = [];
 
     apiready = function () {
 				bleInit(function(ret){
@@ -97,27 +95,39 @@
 				});
     }
 
+		$api.addEvt($api.dom('#sendData'), 'click', function(){
+				sendData();
+		});
+
+
+
 		$api.addEvt($api.dom('.link_btn'), 'click', function(){
 					$api.css($api.dom('.bluetooth'),'top:0%;');
-					// scanDevice(60 * 3, function(device){
-					// 		var i, found = false;
-					// 		for (i = 0; i < currentDevices.length; i++) {
-					// 				if (currentDevices[i].uuid == device.uuid){
-					// 						found = true;
-					// 						break;
-					// 				}
-					// 		}
-					// 		if (!found) {
-					// 			$api.dom('.bluetooth .b_list').append("<li uuid='" + device.uuid + "'>" + device.name + "</li>");
-					// 			$api.addEvt($api.dom('.bluetooth .b_list li'), 'click', function(){
-					// 						api.toast({
-					// 								msg: '连接成功',
-					// 								duration: 2000,
-					// 								location: 'top'
-					// 						});
-					// 			});
-					// 		}
-					// });
+					scanDevice(60 * 3, function(device){
+							var i, found = false;
+							for (i = 0; i < currentDevices.length; i++) {
+									if (currentDevices[i].uuid == device.uuid){
+											found = true;
+											break;
+									}
+							}
+							if (!found) {
+								currentDevices.push(device);
+								$api.append($api.dom('.bluetooth .b_list'), "<li uuid='" + device.uuid + "'>" + device.name + "</li>");
+								$api.addEvt($api.dom('.bluetooth .b_list li'), 'click', function(){
+											// api.toast({
+											// 		msg: '连接成功',
+											// 		duration: 2000,
+											// 		location: 'top'
+											// });
+											var uuid = $api.attr(this, 'uuid');
+											connectDevice(uuid);
+											console.log(uuid);
+
+
+								});
+							}
+					});
 		});
 
 		$api.addEvt($api.dom('.bluetooth'), 'click', function(){
@@ -125,37 +135,37 @@
 					stopScanDevice();//停止扫描
 		});
 
-		$api.addEvt($api.dom('.bluetooth .b_list li'), 'click', function(){
-				api.toast({
-						msg: '连接成功',
-						duration: 2000,
-						location: 'top'
-				});
-				$api.css($api.dom('.wifi_on'),'display:block;');
-				$api.css($api.dom('.wifi_off'),'display:none;');
-				$api.text($api.dom('.s_txt'),'设备已连接');
-				stDevice.addDevice({
-						uuid : 'aaaa-bbbb-cccc-dddd',
-						name : '便携式手持光谱仪'
-				});
-				setTimeout(function(){
-					api.openDrawerLayout({
-							name :'main',
-							url: 'main.html',
-							animation : {
-									type:"none",                //动画类型（详见动画类型常量）
-									subType:"from_left",       //动画子类型（详见动画子类型常量）
-									duration:300                //动画过渡时间，默认300毫秒
-							},
-							leftPane: {
-									edge: api.winWidth * 0.4,
-									name: 'slider',
-									url: 'slider.html'
-							}
-					}, function(ret, err) {
-
-					});
-				}, 500);
-		});
+		// $api.addEvt($api.dom('.bluetooth .b_list li'), 'click', function(){
+		// 		api.toast({
+		// 				msg: '连接成功',
+		// 				duration: 2000,
+		// 				location: 'top'
+		// 		});
+		// 		$api.css($api.dom('.wifi_on'),'display:block;');
+		// 		$api.css($api.dom('.wifi_off'),'display:none;');
+		// 		$api.text($api.dom('.s_txt'),'设备已连接');
+		// 		// stDevice.addDevice({
+		// 		// 		uuid : 'aaaa-bbbb-cccc-dddd',
+		// 		// 		name : '便携式手持光谱仪'
+		// 		// });
+		// 		// setTimeout(function(){
+		// 		// 	api.openDrawerLayout({
+		// 		// 			name :'main',
+		// 		// 			url: 'main.html',
+		// 		// 			animation : {
+		// 		// 					type:"none",                //动画类型（详见动画类型常量）
+		// 		// 					subType:"from_left",       //动画子类型（详见动画子类型常量）
+		// 		// 					duration:300                //动画过渡时间，默认300毫秒
+		// 		// 			},
+		// 		// 			leftPane: {
+		// 		// 					edge: api.winWidth * 0.4,
+		// 		// 					name: 'slider',
+		// 		// 					url: 'slider.html'
+		// 		// 			}
+		// 		// 	}, function(ret, err) {
+		// 		//
+		// 		// 	});
+		// 		// }, 500);
+		// });
 
 </script>

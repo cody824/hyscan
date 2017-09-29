@@ -2,10 +2,11 @@
   var __bluetooth ;
 
   window.bleInit = function(callback) {
-      window.ble = api.require('ble');
+      window.ble = api.require('spp');
       __bluetooth = __bleUtil.loadConfig();
 
       ble.initManager(function(ret) {
+        console.log(JSON.stringify(ret));
           __bluetooth.state = ret.state;
           __bluetooth.show = __bluetooth.show || {};
           switch (ret.state) {
@@ -75,6 +76,7 @@
       var newDevices = {};
      devicesListener = setInterval(function () {
         ble.getPeripheral(function(ret) {
+          console.log(JSON.stringify(ret));
           if (ret && ret.peripherals) {
               var i;
               for(i = 0; i < ret.peripherals.length; i++){

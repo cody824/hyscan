@@ -42,6 +42,7 @@
 </html>
 <script type="text/javascript" src="../script/api.js"></script>
 <script type="text/javascript" src="../script/dp.js"></script>
+<script type="text/javascript" src="../script/ble.js"></script>
 <script type="text/javascript" src="../script/echarts.js"></script>
 <script type="text/javascript">
 	var myChart = echarts.init(document.getElementById('chart'));
@@ -49,13 +50,20 @@
 
 	apiready = function() {
 		$api.attr($api.dom('.chart'), 'width', api.winWidth);
+		bleInit(function(){
+			//connectDevice("DC:0D:30:00:0C:56");
+		});
+
+
 		DPTool.loadData(initChat, function(datas){
 				finallyData = datas;
 		});
 	}
 
 	$api.addEvt($api.dom('.c_btn img'), 'click', function() {
-		gotoResult();
+		//connectDevice("DC:0D:30:00:0C:56");
+		sendData();
+		//gotoResult();
 	});
 
 	function initChat(datas) {

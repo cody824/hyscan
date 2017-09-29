@@ -1,0 +1,200 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="maximum-scale=1.0, minimum-scale=1.0, user-scalable=0, initial-scale=1.0, width=device-width"/>
+    <meta name="format-detection" content="telephone=no, email=no, date=no, address=no">
+    <title>WinA</title>
+    <link rel="stylesheet" type="text/css" href="css/api.css" />
+    <link rel="stylesheet" type="text/css" href="css/box.css" />
+    <script type="text/javascript" src="script/public.js"></script>
+    <style>
+    	p{
+    		color:#999;
+    		padding:5px;
+    	}
+    </style>
+	<script type="text/javascript">
+
+	    //初始化
+	    apiready = function(){
+	    	//alert("蓝牙初始化");
+	    	var bluetoothSPP = api.require("btsppiot");
+	        bluetoothSPP.INIT(
+		        {
+		        	isToast:false
+		        },
+	        	function(ret, err){
+	        	var status = ret.status;
+	        	if(status == 1)api.toast({ msg: "本机没有蓝牙设备"});
+	            if(status == 2)api.toast({ msg: "本机蓝牙没有开启"});
+	        	});
+
+	        /*
+	        bluetoothSPP.connect(
+			        {
+				        sppMac:"30:1A:1C:09:0E:32",
+				        isToast:false
+				    },function(ret, err){
+				        var status = ret.status;
+				        if(status == 3)api.toast({ msg: "给定物理地址有误"});
+				    });
+	        */
+
+	        bluetoothSPP.autoConnect(); //自动连接以配对串口蓝牙
+
+
+	     }
+
+	    //蓝牙已配对列表
+	    function pairedDevice(){
+	    	//alert("蓝牙已配对列表");
+	    	var SPP = api.require("btsppiot");
+	        SPP.paired({
+	            isDialog:false,
+	            isToast:false
+	        },function(ret, err){
+	            var status = ret.status;
+	            if(status == 1)api.toast({ msg: "本机没有蓝牙设备"});
+	            if(status == 2)api.toast({ msg: "本机蓝牙没有开启"});
+	            var pairedArray = ret.pairedArray;
+	            for(var i in pairedArray){
+	                var paired = pairedArray[i];
+	            }
+	            if(pairedArray.length != 0)alert(pairedArray);
+	        });
+		}
+
+		//设置蓝牙设备是否可见
+		function discoverable(){
+	    	//alert("蓝牙可见设置");
+	    	var bleSPP = api.require("btsppiot");
+	    	var time = 128;
+	    	var is = true;
+	    	bleSPP.discoverable(
+	    	{
+	    	isDiscoverable:is,
+	    	time:time,
+	    	isToast:false
+	    	},
+	    	function(ret, err){
+	        	var msg = ret.status;
+				if(msg == 0){
+					//系统已有提示无需设置
+				}else if(msg == 2){
+					api.toast({ msg: "蓝牙可检测性已经是开启状态" });
+				}else if(msg == 1){
+					api.toast({ msg: "蓝牙可检测性已经关闭" });
+				}
+	        });
+		}
+
+		//发送数据
+		function sendMessage(){
+	    	//alert("发送数据");
+			var SPP = api.require("btsppiot");
+		    SPP.send({
+		        sendData:"1234567890qazwsxedcrfvtgbyhnujmi",
+		        isToast:false
+		    },function(ret, err){
+		        var status = ret.status;
+		        if(status == 1)api.toast({ msg: "本机没有蓝牙设备"});
+		        if(status == 2)api.toast({ msg: "本机蓝牙没有开启"});
+		        if(status == 3)api.toast({ msg: "连接已断开"});
+		    });
+		}
+
+	    //读取数据
+	    function readMessage(){
+	    	//alert("读取数据");
+	    	var SPP = api.require("btsppiot");
+	        SPP.receive({
+	            isToast:false
+	        },function(ret, err){
+	            var status = ret.status;
+	            if(status == 1)api.toast({ msg: "本机没有蓝牙设备"});
+	            if(status == 2)api.toast({ msg: "本机蓝牙没有开启"});
+	            if(status == 3)api.toast({ msg: "连接已断开"});
+	            var receiveData = ret.receiveData;
+	            if(receiveData != null)alert(receiveData);
+	        });
+		}
+
+		//获取状态
+	    function bluetoothState(){
+	    	//alert("获取状态");
+	    	var bleSPP = api.require("btsppiot");
+	    	bleSPP.bluetoothState(
+	    		{},
+	    		function(ret, err){
+	    			var status = ret.bluetoothState;
+	    	        if(status == 1)api.toast({ msg: "蓝牙已关闭"});
+	    	        if(status == 2)api.toast({ msg: "蓝牙已开启"});
+	    	        if(status == 3)api.toast({ msg: "蓝牙正在关闭"});
+	    	        if(status == 4)api.toast({ msg: "蓝牙正在开启"});
+	        	});
+		}
+
+	  //获取状态
+	    function connectState(){
+	    	//alert("获取状态");
+	    	var bleSPP = api.require("btsppiot");
+	    	bleSPP.connectState(
+	    		{},
+	    		function(ret, err){
+	    			var status = ret.connectState;
+	    	        if(status == 1)api.toast({ msg: "连接断开"});
+	    	        if(status == 2)api.toast({ msg: "已经连接"});
+	    	        if(status == 3)api.toast({ msg: "正在连接"});
+	    	        if(status == 4)api.toast({ msg: "连接失败"});
+	    	        if(status == 5)api.toast({ msg: "连接丢失"});
+	        	});
+		}
+
+	  //蓝牙扫描
+		function scanDevice(){
+	    var SPP = api.require("btsppiot");
+	    SPP.scan({
+	        isDialog:false,
+	        isToast:false
+	    },function(ret, err){
+	        var status = ret.status;
+	        if(status == 1)api.toast({ msg: "本机没有蓝牙设备"});
+	        if(status == 2)api.toast({ msg: "本机蓝牙没有开启"});
+	        var bondState = ret.bondState;
+	        if(bondState == 1)api.toast({ msg: "取消配对"});
+	        if(bondState == 2)api.toast({ msg: "已经配对"});
+	        if(bondState == 3)api.toast({ msg: "正在配对"});
+	        var scanState = ret.scanState;
+	        if(scanState == 1)api.toast({ msg: "扫描开始"});
+	        if(scanState == 2)api.toast({ msg: "扫描完成"});
+	        if(scanState == 3)api.toast({ msg: "发现设备"});
+	        if(scanState == 4)api.toast({ msg: "配对改变"});
+	        var scanArray = ret.scanArray;
+	        for(var i in scanArray){
+	            var scan = scanArray[i];
+	        }
+	        if(scanArray.length != 0)alert(scanArray);
+	    });
+}
+
+	</script>
+</head>
+<body>
+    <div id="wrap">
+        <div id="main">
+        	<br>
+
+			<div class='itemtitle'>蓝牙串口通讯</div>
+				<div class="clickbtn" tapmode="active" onclick="pairedDevice()" >已配对列表</div>
+				<div class="clickbtn" tapmode="active" onclick="discoverable()" >蓝牙可见</div>
+				<div class="clickbtn" tapmode="active" onclick="scanDevice()" >蓝牙扫描</div>
+				<div class="clickbtn" tapmode="active" onclick="sendMessage()" >发送数据</div>
+				<div class="clickbtn" tapmode="active" onclick="readMessage()" >读取数据</div>
+				<div class="clickbtn" tapmode="active" onclick="bluetoothState()" >蓝牙状态</div>
+				<div class="clickbtn" tapmode="active" onclick="connectState()" >连接状态</div>
+
+		</div>
+	</div>
+</body>
+</html>
