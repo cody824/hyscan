@@ -102,7 +102,7 @@
 				map.addAnnotations({
 					annotations: annotations,
 				}, function(ret) {
-					console.log(JSON.stringify(ret))
+					// console.log(JSON.stringify(ret))
 				});
 				map.setCenter({
 					coords: {
@@ -123,13 +123,12 @@
 					var annotation = annotations[i];
 					var title = "共有" + annotation.tasks.length + "个任务";
 					var subTitle = "";
-					for (var i = 0; i < annotation.tasks.length; i++){
-						var task = annotation.tasks[i];
+					for (var j = 0; j < annotation.tasks.length; j++){
+						var task = annotation.tasks[j];
 						subTitle += task.result.material + "(" + task.result.level + "级老化)" + "|";
 					}
-
 					map.setBubble({
-						id: i,
+						id: annotation.id,
 						content: {
 							title: title,
 							subTitle: subTitle,
@@ -143,7 +142,6 @@
 						}
 					}, function(ret) {
 						if (ret) {
-							console.log(JSON.stringify(ret));
 							if (ret.eventType == "clickContent") {
 								var task = annotations[ret.id].tasks[0];
 								stTask.getTask(task.id, true, function(ret) {
