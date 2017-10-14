@@ -3,26 +3,50 @@
     window.isDev = true;
 
     var __config = {};
-
-    //辐亮度定标参数
-    __config.radianceParams = {
-        "0105": [5, 2]
-    }
-
-    //光谱范围
-    __config.spectralRange = {
-        "0105": [648, 1012]
-    }
-
+    __config.models = {};
     __config.serverUrl = "http://192.168.125.120:9090/";
-
     __config.login = {
         qq : false,
         wechat : false,
         weibo : true
     }
-
     window.globalConfig = __config;
+
+
+    var defaultModelConfig = {
+        "0105" : {
+            radianceParams : [5, 2],
+            spectralRange : [648, 1012]
+        }
+    }
+
+    window.initModelConfig = function(fetch){
+        var __appConfig = $api.getStorage('appConfig');
+        if (__appConfig.globalConfig.serverIp && isDev)
+            globalConfig.serverUrl = "http://" + __appConfig.globalConfig.serverIp + ":9090/"
+
+        if (fetch) {
+            api.ajax({
+                url: globalConfig.serverUrl + "app/modelConfig/",
+                method: 'get',
+            },function(ret, err){
+                if (ret && ret.length > 0) {
+                    for (var i = 0; i < ret.length; i++){
+                        var model = ret[i];
+                        console.log("初始化型号:" + model.model);
+                        globalConfig.models[model.model] = model;
+                    }
+                    $api.setStorage('supportModels', globalConfig.models);
+                } else {
+                    console.log("获取型号配置失败，使用默认配置")
+                    globalConfig.models = $api.getStorage('supportModels') || defaultModelConfig;
+                }
+                isModelInit = true;
+            });
+        } else {
+            globalConfig.models = $api.getStorage('supportModels') || defaultModelConfig;
+        }
+    }
 
     window.isLoad = false;
 
@@ -38,18 +62,23 @@
         __appConfig.globalConfig = __appConfig.globalConfig || {};
         __appConfig.globalConfig.collectNum = __appConfig.globalConfig.collectNum || 1;
         if (__appConfig.device && __appConfig.device.model) {
-            var radiances = window.globalConfig.radianceParams[__appConfig.device.model];
-            if (radiances && radiances.length == 2) {
-                __appConfig.device.radianceA = radiances[0];
-                __appConfig.device.radianceB = radiances[1];
+            var modelConfig = window.globalConfig.models[__appConfig.device.model];
+            if (modelConfig) {
+                var radiances = modelConfig.radianceParams;
+                if (radiances && radiances.length == 2) {
+                    __appConfig.device.radianceA = radiances[0];
+                    __appConfig.device.radianceB = radiances[1];
+                } else {
+                    console.log(__appConfig.device.model + "辐亮度配置不存在或者配置错误");
+                }
+                var spectralRange = modelConfig.spectralRange;
+                if (spectralRange) {
+                    __appConfig.device.spectralRange = spectralRange;
+                } else {
+                    console.log(__appConfig.device.model + "光谱坐标范围配置不存在");
+                }
             } else {
-                console.log(__appConfig.device.model + "辐亮度配置不存在或者配置错误");
-            }
-            var spectralRange = window.globalConfig.spectralRange[__appConfig.device.model];
-            if (spectralRange) {
-                __appConfig.device.spectralRange = spectralRange;
-            } else {
-                console.log(__appConfig.device.model + "光谱坐标范围配置不存在");
+                console.log("不支持的型号：" + __appConfig.device.model);
             }
         }
         window.appConfig = __appConfig;
@@ -208,5 +237,6 @@
             //callback(ret, err)
         });
     }
+    initModelConfig();
     if (!isLoad) loadAppConfig();
 })(window);

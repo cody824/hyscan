@@ -109,12 +109,13 @@
         spp.connect({
             address: address
         }, function(ret, err) {
-            console.log(JSON.stringify(ret));
             if (ret.err) {
+                console.log("连接蓝牙设备【" + address + "】失败：" + ret.err);
                 if (typeof callback == "function") {
                     callback(ret);
                 }
             } else if (ret.device) {
+                console.log("连接蓝牙设备【" + address + "】成功");
                 if (typeof callback == "function") {
                     callback(JSON.parse(ret.device));
                 }

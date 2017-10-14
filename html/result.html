@@ -429,10 +429,7 @@
 				stTask.sendTaskToRemote(localTask, function(ret, err) {
 					if (ret.id) {
 						if (imagePath) {
-							stTask.sendTaskImgToRemote(imagePath, ret.id, function(ret, err) {
-								console.log(JSON.stringify(ret));
-								console.log(JSON.stringify(err))
-							})
+							stTask.sendTaskImgToRemote(imagePath, ret.id)
 						}
 						saved = true;
 						localTask.isUpload = true;

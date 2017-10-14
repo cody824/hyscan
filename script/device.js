@@ -99,7 +99,6 @@
                 isHex: true,
                 sendData: '55CC090010013B0000',
             }, function(ret) {
-                console.log(JSON.stringify(ret));
                 if (typeof callback == "function") {
                     callback(ret);
                 }
@@ -113,7 +112,6 @@
                 isHex: true,
                 sendData: '55CC090010023C0000',
             }, function(ret) {
-                console.log(JSON.stringify(ret));
                 if (typeof callback == "function") {
                     callback(ret);
                 }
@@ -127,7 +125,6 @@
                 isHex: true,
                 sendData: '55CC090010003A0000',
             }, function(ret) {
-                console.log(JSON.stringify(ret));
                 if (typeof callback == "function") {
                     callback(ret);
                 }
@@ -144,14 +141,12 @@
               crc = crc.substring(crc.length - 2);
           }
           var sendData = "55CC090011" + period + crc + "0000";
-          console.log(sendData.toUpperCase());
           var spp = api.require("spp");
             spp.send({
                 address: address,
                 isHex: true,
                 sendData: sendData.toUpperCase(),
             }, function(ret) {
-                console.log(JSON.stringify(ret));
                 if (typeof callback == "function") {
                     callback(ret);
                 }
@@ -165,7 +160,6 @@
                 isHex: true,
                 sendData: '55CC090012114D0000',
             }, function(ret) {
-                console.log(JSON.stringify(ret));
                 if (typeof callback == "function") {
                     callback(ret);
                 }
@@ -179,7 +173,6 @@
                 isHex: true,
                 sendData: '55CC090012104C0000',
             }, function(ret) {
-                console.log(JSON.stringify(ret));
                 if (typeof callback == "function") {
                     callback(ret);
                 }
@@ -193,7 +186,6 @@
                 isHex: true,
                 sendData: '55CC090020004A0000',
             }, function(ret) {
-                console.log(JSON.stringify(ret));
                 if (typeof callback == "function") {
                     callback(ret);
                 }
@@ -207,7 +199,6 @@
                 isHex: true,
                 sendData: '55CC090021004B0000',
             }, function(ret) {
-                console.log(JSON.stringify(ret));
                 if (typeof callback == "function") {
                     callback(ret);
                 }
@@ -254,9 +245,11 @@
             var cmd = null;
             if (afterCmd.length >= dataLength * 2) {
                 cmd = afterCmd.substr(0, dataLength * 2);
-                console.log("cmd返回开始:" + cmd.substr(0, 8));
-                console.log("cmd返回长度:" + beginIndex + ":" + lengthH + ":" + lengthL + ":" + dataLength);
-                console.log("cmd返回结束:" + cmd.substr(cmd.length - 4));
+                if(appConfig.sppDebug) {
+                    console.log("cmd返回开始:" + cmd.substr(0, 8));
+                    console.log("cmd返回长度:" + beginIndex + ":" + lengthH + ":" + lengthL + ":" + dataLength);
+                    console.log("cmd返回结束:" + cmd.substr(cmd.length - 4));
+                }
                 var reg = /(^55CC)[0123456789ABCDEF]+(0000$)/i;
                 leftStr = afterCmd.substr(dataLength * 2);
                 if (reg.test(cmd)) {
@@ -314,7 +307,6 @@
     function doWithCollect(data, handler, stopHandler) {
         handler = handler || function() {};
         stopHandler = stopHandler || function() {};
-        console.log("采集数据:" + data.length);
         if (data.length == 2) {
             stopHandler();
             return;
