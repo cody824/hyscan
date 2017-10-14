@@ -34,7 +34,10 @@
                     for (var i = 0; i < ret.length; i++){
                         var model = ret[i];
                         console.log("初始化型号:" + model.model);
-                        globalConfig.models[model.model] = model;
+                        globalConfig.models[model.model] = {
+                            radianceParams : model.radianceParams,
+                            spectralRange : model.spectralRange
+                        };
                     }
                     $api.setStorage('supportModels', globalConfig.models);
                 } else {
