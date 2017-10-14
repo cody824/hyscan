@@ -36,11 +36,11 @@
 
 <body>
 	<div class="r_banner">
-		<div class="pie">
-			<img src="../img/img_pie.png" />
+		<div class="pie" id="pie">
+			<img src="../img/img_pie.png" style="opacity:0" />
 			<div class="r_txt">
-				<span class="p1">二级老化</span>
-				<p class="p2">金属材质</p>
+				<span class="p1" id="levelText">正在检测</span>
+				<p class="p2" id="material">…………</p>
 			</div>
 		</div>
 	</div>
@@ -67,14 +67,24 @@
 
 </html>
 <script type="text/javascript" src="../script/api.js"></script>
+<script type="text/javascript" src="../script/app.js"></script>
+<script type="text/javascript" src="../script/navi.js"></script>
+<script type="text/javascript" src="../script/task.js"></script>
 <script type="text/javascript" src="../script/dp.js"></script>
 <script type="text/javascript" src="../script/echarts.js"></script>
 <script>
-	var uiLoading;
 	var dialogBox;
 	var myChart;
 	var chartData;
+	var pieId;
+	var taskData; //任务数据
+	var taskResult; //检测结果
+	var position; //位置信息
+	var saved = false;
+	var inCheck = true;
+
 	var properties = $api.domAll('.r_tab li');
+	var arcProgress;
 
 	var i;
 	for (i = 0; i < properties.length; i++) {
@@ -92,25 +102,26 @@
 	}
 
 	$api.addEvt($api.dom('.cancel'), 'click', function() {
-		api.openDrawerLayout({
-				name :'main',
-				url: 'main.html',
-				animation : {
-						type:"none",                //动画类型（详见动画类型常量）
-						subType:"from_left",       //动画子类型（详见动画子类型常量）
-						duration:300                //动画过渡时间，默认300毫秒
-				},
-				leftPane: {
-						edge: api.winWidth * 0.4,
-						name: 'slider',
-						url: 'slider.html'
-				}
-		}, function(ret, err) {
-
-		});
+		gotoMain();
 	});
 
 	$api.addEvt($api.dom('.save'), 'click', function() {
+		if (saved) {
+			api.toast({
+				msg: '已经保存',
+				duration: 2000,
+				location: 'bottom'
+			});
+			return;
+		}
+		if (inCheck) {
+			api.toast({
+				msg: '正在检测数据，请稍后保存',
+				duration: 2000,
+				location: 'bottom'
+			});
+			return;
+		}
 		dialogBox.input({
 			keyboardType: 'default',
 			texts: {
@@ -153,52 +164,164 @@
 			},
 			tapClose: true
 		}, function(ret) {
-			console.log(JSON.stringify(ret));
+			var title = ret.text;
+			if (title.length == 0 || title.length > 20) {
+				api.toast({
+					msg: '请输入0-20个字符',
+					duration: 2000,
+					location: 'top'
+				});
+				return;
+			}
+			var lr = ret.eventType;
 			dialogBox.close({
 				dialogName: 'input'
 			});
+			api.confirm({
+				title: '是否拍照？',
+				msg: '是否保存扫描对象的照片',
+				buttons: ['拍照', '不拍照']
+			}, function(ret, err) {
+				if (ret && ret.buttonIndex == 1) {
+					var FNPhotograph = api.require('FNPhotograph');
+					FNPhotograph.open({
+						path: 'fs://task//img',
+						album: false,
+						quality: 'high'
+					}, function(ret) {
+						if (ret.eventType == "takePhoto") {
+							FNPhotograph.close();
+							var imagePath = ret.imagePath;
+							if (lr == 'left') {
+								doSaveLocal(title, imagePath);
+							} else if (lr == 'right') {
+								doSaveRemote(title, imagePath);
+							}
 
-			if (ret.eventType == 'left') {
-				doSaveLocal(ret.text);
-			} else if (ret.eventType == 'right') {
-				doSaveRemote(ret.text);
-			}
+						}
+					});
+				} else if (ret && ret.buttonIndex == 2) {
+					if (lr == 'left') {
+						doSaveLocal(title);
+					} else if (lr == 'right') {
+						doSaveRemote(title);
+					}
+				}
+			});
 		});
 	});
 
 	apiready = function() {
+		arcProgress = api.require('arcProgress');
+		arcProgress.open({
+			type: 'annular ',
+			centerX: api.frameWidth / 6 * (2 * 1 + 1),
+			centerY: $api.cssVal($api.dom('#pie'), 'height'),
+			radius: api.frameWidth / 5,
+			bgColor: '#005066',
+			pgColor: '#00F9FF',
+			loopWidth: 10,
+			fixedOn: api.frameName
+		}, function(ret, err) {
+			pieId = ret.id;
+		});
+		var bMap = api.require('bMap');
+		bMap.getLocation({
+			accuracy: '100m',
+			autoStop: true,
+			filter: 1
+		}, function(ret, err) {
+			if (ret.status) {
+				position = ret;
+				bMap.getNameFromCoords({
+					lon: position.lon,
+					lat: position.lat
+				}, function(ret, err) {
+					if (ret.status) {
+						position.address = ret.address; //字符串类型；地址信息
+						position.province = ret.province; //字符串类型；省份
+						position.city = ret.city; //字符串类型；城市
+						position.district = ret.district; //字符串类型；县区
+						position.streetName = ret.streetName; //字符串类型；街道名
+						position.streetNumber = ret.streetNumber;
+					} else {
+						console.log(JSON.stringify(err));
+					}
+				});
+			} else {
+				console.log(JSON.stringify(err));
+			}
+		});
+
 		$api.attr($api.dom('.chart'), 'width', api.winWidth);
 		$api.attr($api.dom('.chart'), 'height', api.winWidth * 2 / 3);
 		myChart = echarts.init(document.getElementById('chart'));
 		var property = $api.attr($api.dom('.r_tab .press'), 'data-property');
 
 		dialogBox = api.require('dialogBox');
-		uiLoading = api.require('UILoading');
-		chartData = api.pageParam.datas;
+		var datas = api.pageParam.datas;
+		taskData = datas;
+		var labels = api.pageParam.labels;
+		DPTool.setXAxis(labels);
+
+		var progress = 0
+		var checkInter = setInterval(function () {
+			if (progress == 100) progress = 0;
+			arcProgress.setValue({
+				id: pieId,
+				value: progress++
+			});
+		}, 10);
+
+		chartData = {
+			dn: datas,
+			radiance: DPTool.getRadiance(datas),
+			reflectivity: DPTool.getReflectivity(datas),
+			rmPacketLine: DPTool.getRmPacketLine(datas)
+		}
+		stTask.getTestResult(chartData.reflectivity, function(result) {
+			clearInterval(checkInter);
+			inCheck = false;
+			setTestResult(result);
+		});
 
 		initChat(property);
+
+
+		api.addEventListener({
+			name: 'keyback'
+		}, function(ret, err) {
+			gotoMain();
+		});
 	}
 
 	function initChat(property) {
 		var showConfig = {};
-		var datas = chartData;
+		var datas;
 		showConfig.formatter = "波长：{b}nm <br/> {a} : {c}";
 		switch (property) {
 			case 'dn':
 				showConfig.title = "DN值";
+				datas = chartData[property];
 				break;
 			case 'radiance':
 				showConfig.title = "辐亮度";
-				datas = DPTool.getRadiance(datas);
+				datas = chartData[property];
 				break;
 			case 'reflectivity':
 				showConfig.title = "反射率";
 				showConfig.formatter = "波长：{b}nm <br/> {a} : {c}%";
-				datas = DPTool.getReflectivity(datas);
+				datas = [];
+				for (var i = 0; i < chartData[property].length; i++) {
+					datas[i] = parseFloat(chartData[property][i]).toFixed(2);
+				}
 				break;
 			case 'rmPacketLine':
 				showConfig.title = "除去包格线";
-				datas = DPTool.getRmPacketLine(datas);
+				datas = [];
+				for (var i = 0; i < chartData[property].length; i++) {
+					datas[i] = parseFloat(chartData[property][i]).toFixed(2);
+				}
 				break;
 			default:
 
@@ -207,14 +330,14 @@
 		// 指定图表的配置项和数据
 		var option = {
 			grid: {
-				left:40,
+				left: 40,
 				top: 5,
 				right: 0,
 				bottom: 40,
 				borderWidth: 1
 			},
 			title: {
-				show : false,
+				show: false,
 				text: showConfig.title,
 				textStyle: {
 					color: '#00DEFF',
@@ -274,37 +397,120 @@
 		myChart.setOption(option);
 	}
 
-	function doSaveLocal(title) {
-		uiLoading.keyFrame({
-			rect: {
-				w: 80,
-				h: 100
-			},
-			styles: {
-				bg: 'rgba(0,0,0,0.5)',
-				corner: 5,
-				interval: 50,
-				frame: {
-					w: 80,
-					h: 80
-				}
+	function doSaveLocal(title, imagePath) {
+		stTask.addTask(taskData, taskResult, position, title, imagePath, appConfig.device, function(ret) {
+			if (ret.status) {
+				saved = true;
+				api.toast({
+					msg: '保存成功',
+					duration: 2000,
+					location: 'top'
+				});
+			} else {
+				api.alert({
+					title: '保存失败',
+					msg: ret.err.msg,
+				});
 			}
-		}, function(ret) {
-			console.log(JSON.stringify(ret));
 		});
-		setTimeout(function() {
-			api.toast({
-				msg: '保存成功',
-				duration: 2000,
-				location: 'top'
-			});
-			uiLoading.closeKeyFrame();
-		}, 1000)
-
-
 	}
 
-	function doSaveRemote(title) {
-		doSaveLocal(title);
+	function doSaveRemote(title, imagePath) {
+		api.showProgress({
+			style: 'default',
+			animationType: 'fade',
+			title: '数据保存中...',
+			text: '先喝杯茶...',
+			modal: true
+		});
+		stTask.addTask(taskData, taskResult, position, title, imagePath, appConfig.device, function(ret) {
+			if (ret.status) {
+				var localTask = ret.task;
+				stTask.sendTaskToRemote(localTask, function(ret, err) {
+					if (ret.id) {
+						if (imagePath) {
+							stTask.sendTaskImgToRemote(imagePath, ret.id, function(ret, err) {
+								console.log(JSON.stringify(ret));
+								console.log(JSON.stringify(err))
+							})
+						}
+						saved = true;
+						localTask.isUpload = true;
+						stTask.updateTaskInfo(localTask, function(ret) {});
+						api.toast({
+							msg: '保存成功',
+							duration: 2000,
+							location: 'top'
+						});
+					} else {
+						if (err.statusCode == 401) {
+							api.alert({
+							    title: '没有登录或者登录失效',
+							    msg: '请重新登陆后保存，任务已经保存到本地，可以在我的任务中查看并上传',
+							}, function(){
+								stTask.getTask(localTask.id, true, function(ret){
+									if (ret.status) {
+										gotoTaskInfo(ret.task);
+									}
+								})
+							});
+						} else {
+							api.alert({
+								title: '保存到服务器失败',
+								msg: err.msg,
+							}, function(){
+								stTask.getTask(localTask.id, true, function(ret){
+									if (ret.status) {
+										gotoTaskInfo(ret.task);
+									}
+								})
+							});
+						}
+					}
+					api.hideProgress();
+				});
+			} else {
+				api.alert({
+					title: '保存失败',
+					msg: ret.err.msg,
+				});
+				api.hideProgress();
+			}
+		});
+	}
+
+	function setTestResult(result) {
+		var oldLevelText = "";
+		var color = "#00F9FF";
+		if (result.level == 1) {
+			oldLevelText = "一级老化";
+			color = "#00F9FF";
+		} else if (result.level == 2) {
+			oldLevelText = "二级老化";
+			color = "#8BC974";
+		}
+		if (result.level == 3) {
+			oldLevelText = "三级老化";
+			color = "#FF6200"
+		}
+		arcProgress.open({
+			type: 'annular ',
+			centerX: api.frameWidth / 6 * (2 * 1 + 1),
+			centerY: $api.cssVal($api.dom('#pie'), 'height'),
+			radius: api.frameWidth / 5,
+			bgColor: '#005066',
+			pgColor: color,
+			loopWidth: 10,
+			fixedOn: api.frameName
+		}, function(ret, err) {
+			pieId = ret.id;
+			arcProgress.setValue({
+				id: pieId,
+				value: result.level * 100 / 3
+			});
+		});
+		taskResult = result;
+		$api.text($api.dom('#material'), result.material);
+		$api.text($api.dom('#levelText'), oldLevelText);
 	}
 </script>

@@ -1,58 +1,80 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="utf-8">
-    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
-    <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
-    <link rel="stylesheet" type="text/css" href="../css/api.css"/>
-    <link rel="stylesheet" type="text/css" href="../css/style.css"/>
-    <link rel="stylesheet" type="text/css" href="../css/index.css" />
-		<title>设备</title>
-	</head>
-	<body style="position: relative; background:url(../img/main_bg.jpg) no-repeat; background-size:100% 100%; background-attachment: fixed;">
-		<div class="title">
-			<span class="btn_logo">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0" />
+	<meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+	<link rel="stylesheet" type="text/css" href="../css/api.css" />
+	<link rel="stylesheet" type="text/css" href="../css/style.css" />
+	<link rel="stylesheet" type="text/css" href="../css/index.css" />
+	<title>设备</title>
+</head>
+
+<body style="position: relative; background:url(../img/main_bg.jpg) no-repeat; background-size:100% 100%; background-attachment: fixed;">
+	<div class="title">
+		<span class="btn_logo">
 				<img src="../img/left_arrow.png" />
-			</span>
-			设备
-		</div>
-		<div class="head-box">
-			<img class="eq-img" src="../img/scanning_img.png" />
-			<p class="eq-name">便携式手持光谱仪</p>
-			<p class="eq-number">V1.0025555</p>
-		</div>
-		<ul class="eq-box">
-			<li class="clearfix">
-				<span class="small-ico"></span>
-				<span class="ico-name">序列号</span>
-				<span class="ico-info">MS1154646464</span>
-			</li>
-			<li class="clearfix">
-				<span class="small-ico ico2"></span>
-				<span class="ico-name">固件版本</span>
-				<span class="ico-info">DSSSD222</span>
-			</li>
-			<li class="clearfix">
-				<span class="small-ico ico3"></span>
-				<span class="ico-name">电池电量</span>
-				<span class="ico-info">100％</span>
-			</li>
-		</ul>
-	</body>
+			</span> 设备
+	</div>
+	<div class="head-box">
+		<img class="eq-img" src="../img/scanning_img.png" />
+		<p class="eq-name">便携式手持光谱仪</p>
+		<p class="eq-number"></p>
+	</div>
+	<ul class="eq-box">
+		<li class="clearfix">
+			<span class="small-ico"></span>
+			<span class="ico-name">序列号</span>
+			<span class="ico-info serialNum"></span>
+		</li>
+		<li class="clearfix">
+			<span class="small-ico ico2"></span>
+			<span class="ico-name">固件版本</span>
+			<span class="ico-info firmware"></span>
+		</li>
+		<li class="clearfix">
+			<span class="small-ico ico3"></span>
+			<span class="ico-name">电池电量</span>
+			<span class="ico-info batteryInfo"></span>
+		</li>
+	</ul>
+</body>
+
 </html>
 <script type="text/javascript" src="../script/api.js"></script>
 <script type="text/javascript" src="../script/app.js"></script>
+<script type="text/javascript" src="../script/spp.js"></script>
 <script type="text/javascript" src="../script/device.js"></script>
 <script>
-		$api.addEvt($api.dom('.btn_logo'), 'click', function(){
-					api.historyBack({
-					},function(ret,err){
-							if(!ret.status){
-									api.closeWin();
-							}
-					});
+	$api.addEvt($api.dom('.btn_logo'), 'click', function() {
+		api.historyBack({}, function(ret, err) {
+			if (!ret.status) {
+				api.closeWin();
+			}
 		});
-		apiready = function(){
+	});
+	updateInfo();
 
+	apiready = function() {
+		sppUtil.init(function() {
+			stDevice.isDeviceOk(function(ret) {
+				if (ret.status >= 0) {
+					stDevice.readDeviceInfo(appConfig.device.address, function() {
+						updateInfo();
+						sppUtil.disconnectDevice(appConfig.device.address);
+					})
+				}
+			})
+		});
+	}
+
+	function updateInfo() {
+		if (appConfig.device) {
+			$api.text($api.dom('.eq-number'), appConfig.device.model);
+			$api.text($api.dom('.serialNum'), appConfig.device.serial);
+			$api.text($api.dom('.firmware'), appConfig.device.firmware);
+			$api.text($api.dom('.batteryInfo'), appConfig.device.batteryInfo + "%");
 		}
+	}
 </script>

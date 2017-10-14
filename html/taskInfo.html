@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0" />
+    <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+    <title>结果</title>
+    <link rel="stylesheet" type="text/css" href="../css/api.css" />
+    <link rel="stylesheet" type="text/css" href="../css/style.css" />
+    <link rel="stylesheet" type="text/css" href="../css/index.css" />
+    <style>
+         ::-webkit-input-placeholder {
+            /* WebKit browsers */
+            color: #999;
+        }
+        
+        :-moz-placeholder {
+            /* Mozilla Firefox 4 to 18 */
+            color: #999;
+            opacity: 1;
+        }
+        
+        ::-moz-placeholder {
+            /* Mozilla Firefox 19+ */
+            color: #999;
+            opacity: 1;
+        }
+        
+        :-ms-input-placeholder {
+            /* Internet Explorer 10+ */
+            color: #999;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="r_banner">
+        <div class="task_name"></div>
+        <div class="pie" id="pie">
+            <img src="../img/img_pie.png" style="opacity:0" />
+            <div class="r_txt">
+                <span class="p1" id="levelText">二级老化</span>
+                <p class="p2" id="material">金属材质</p>
+            </div>
+        </div>
+    </div>
+    <ul class="r_tab data_type">
+        <li class="press" data-property="dn">DN值</li>
+        <li data-property="radiance">辐亮度</li>
+        <li data-property="reflectivity">反射率</li>
+        <li data-property="rmPacketLine">除去包格线</li>
+    </ul>
+
+    <div class="chart" id="chart" style="height:200px;">
+
+    </div>
+    <div class="rbtn upload_task save">
+        <img src="../img/btn_baocun.png" />
+        <span>上传任务</span>
+    </div>
+    <div class="rbtn task_photo cancel">
+        <a href="javascript:;"><img src="../img/btn_takephoto.png" /></a>
+        <span>拍摄照片</span>
+    </div>
+</body>
+
+</html>
+<script type="text/javascript" src="../script/api.js"></script>
+<script type="text/javascript" src="../script/app.js"></script>
+<script type="text/javascript" src="../script/navi.js"></script>
+<script type="text/javascript" src="../script/task.js"></script>
+<script type="text/javascript" src="../script/dp.js"></script>
+<script type="text/javascript" src="../script/echarts.js"></script>
+<script>
+    var myChart;
+    var chartData;
+    var pieId;
+    var task; //当前任务
+    var backWin = "my";
+
+    var properties = $api.domAll('.data_type li');
+    var arcProgress;
+
+    for (var i = 0; i < properties.length; i++) {
+        var el = properties[i];
+        $api.addEvt(el, 'click', function() {
+            var j;
+            for (j = 0; j < properties.length; j++) {
+                $api.removeCls(properties[j], 'press');
+            }
+            $api.addCls(this, 'press');
+            var property = $api.attr(this, 'data-property');
+            initChat(property);
+        });
+    }
+
+    $api.addEvt($api.dom('.task_photo'), 'click', function() {
+        var FNPhotograph = api.require('FNPhotograph');
+        FNPhotograph.open({
+            path: 'fs://task//img',
+            album: false,
+            quality: 'high'
+        }, function(ret) {
+            if (ret.eventType == "takePhoto") {
+                FNPhotograph.close();
+                stTask.deleteTaskImage(task);
+                task.imagePath = ret.imagePath;
+                stTask.updateTaskInfo(task, function(ret) {
+                    api.toast({
+                        msg: '照片更新成功',
+                        duration: 2000,
+                        location: 'bottom'
+                    });
+                });
+                if (task.isUpload) {
+                    stTask.sendTaskImgToRemote(ret.imagePath, task.id, function(ret, err) {
+                        if (err) {
+                            api.toast({
+                                msg: '照片未能上传,请登录后重试',
+                                duration: 3000,
+                                location: 'bottom'
+                            });
+                        }
+                    });
+                }
+            }
+        });
+    });
+
+    $api.addEvt($api.dom('.upload_task'), 'click', function() {
+        if (task.isUpload) {
+            api.toast({
+                msg: '已经上传',
+                duration: 2000,
+                location: 'bottom'
+            });
+        } else {
+            stTask.getTask(task.id, true, function(ret) {
+                if (ret.status) {
+                    var appTask = deepCopy(ret.task);
+                    appTask.data = {
+                        dn: task.data,
+                        darkCurrent: task.dc[0],
+                        whiteboardData: task.dc[1]
+                    }
+                    stTask.sendTaskToRemote(appTask, function(ret, err) {
+                        console.log(JSON.stringify(ret));
+                        if (ret.id) {
+                            task.isUpload = true;
+                            stTask.updateTaskInfo(task, function(ret) {});
+                            api.toast({
+                                msg: '保存成功',
+                                duration: 2000,
+                                location: 'top'
+                            });
+                            if (task.imagePath) {
+                                stTask.sendTaskImgToRemote(task.imagePath, task.id, function(ret, err) {});
+                            }
+                        } else {
+                            var msg;
+                            try {
+                                var retMsg = JSON.parse(err.msg);
+                                msg = retMsg.errorMsg;
+                            } catch (e) {
+                                msg = err.msg;
+                            }
+                            api.alert({
+                                title: '保存到服务器失败',
+                                msg: msg,
+                            });
+                        }
+                    });
+                } else {
+                    api.alert({
+                        title: '任务信息读取失败',
+                        msg: ret.err.msg,
+                    });
+                }
+            })
+        }
+    });
+
+    function deepCopy(p, c) {　　　　
+        var c = c || {};　　　　
+        for (var i in p) {　　　　　　
+            if (typeof p[i] === 'object') {　　　　　　　　
+                c[i] = (p[i].constructor === Array) ? [] : {};　　　　　　　　
+                deepCopy(p[i], c[i]);　　　　　　
+            } else {　　　　　　　　　
+                c[i] = p[i];　　　　　　
+            }　　　　
+        }　　　　
+        return c;　　
+    }
+
+    apiready = function() {
+        arcProgress = api.require('arcProgress');
+        api.addEventListener({
+            name: 'keyback'
+        }, function(ret, err) {
+            if (backWin == "map") {
+                gotoMap();
+            } else {
+                gotoMe();
+            }
+        });
+        api.addEventListener({
+            name: 'viewdisappear'
+        }, function(ret, err) {
+            api.closeWin('taskInfo');
+        });
+
+        $api.attr($api.dom('.chart'), 'width', api.winWidth);
+        $api.attr($api.dom('.chart'), 'height', api.winWidth * 2 / 3);
+        myChart = echarts.init(document.getElementById('chart'));
+        var property = $api.attr($api.dom('.r_tab .press'), 'data-property');
+
+        task = api.pageParam.task;
+        backWin = api.pageParam.back;
+
+        $api.text($api.dom('.task_name'), task.name);
+
+
+        var labels = [];
+        var range = task.device.spectralRange;
+        for (var i = range[0]; i < range[1]; i++) {
+            labels.push(1.9799 * i - 934.5831);
+        }
+        setTestResult(task.result);
+        DPTool.setXAxis(labels);
+        chartData = {
+            dn: task.data,
+            radiance: DPTool.getRadiance(task.data, task.device.radianceA, task.device.radianceB),
+            reflectivity: DPTool.getReflectivity(task.data, task.dc[0], task.dc[1]),
+            rmPacketLine: DPTool.getRmPacketLine(task.data, task.dc[0], task.dc[1])
+        }
+
+        initChat(property);
+    }
+
+    function initChat(property) {
+        var showConfig = {};
+        var datas;
+        showConfig.formatter = "波长：{b}nm <br/> {a} : {c}";
+        switch (property) {
+            case 'dn':
+                showConfig.title = "DN值";
+                datas = chartData[property];
+                break;
+            case 'radiance':
+                showConfig.title = "辐亮度";
+                datas = chartData[property];
+                break;
+            case 'reflectivity':
+                showConfig.title = "反射率";
+                showConfig.formatter = "波长：{b}nm <br/> {a} : {c}%";
+                datas = [];
+                for (var i = 0; i < chartData[property].length; i++) {
+                    datas[i] = parseFloat(chartData[property][i]).toFixed(2);
+                }
+                break;
+            case 'rmPacketLine':
+                showConfig.title = "除去包格线";
+                datas = [];
+                for (var i = 0; i < chartData[property].length; i++) {
+                    datas[i] = parseFloat(chartData[property][i]).toFixed(2);
+                }
+                break;
+            default:
+
+        }
+
+        // 指定图表的配置项和数据
+        var option = {
+            grid: {
+                left: 40,
+                top: 5,
+                right: 0,
+                bottom: 40,
+                borderWidth: 1
+            },
+            title: {
+                show: false,
+                text: showConfig.title,
+                textStyle: {
+                    color: '#00DEFF',
+                    align: 'left',
+                },
+                padding: 5,
+                itemGap: 0
+            },
+            tooltip: {
+                trigger: 'axis',
+                formatter: showConfig.formatter
+            },
+            xAxis: {
+                data: DPTool.getXAxis(),
+                name: '波长(nm)',
+                nameLocation: 'middle',
+                nameGap: '30',
+                nameTextStyle: {
+                    color: '#00DEFF'
+                },
+                axisTick: {
+                    lineStyle: {
+                        color: '#E1E1E1'
+                    }
+                },
+                axisLine: {
+                    show: false
+                },
+                axisLabel: {
+                    color: '#666666'
+                }
+            },
+            yAxis: {
+                formatter: '{value}%',
+                axisLine: {
+                    show: false
+                },
+                axisTick: false,
+                axisLabel: {
+                    color: '#666666'
+                }
+            },
+            series: [{
+                name: showConfig.title,
+                type: 'line',
+                lineStyle: {
+                    normal: {
+                        color: '#00DEFF',
+                    }
+                },
+                smooth: true,
+                showSymbol: false,
+                data: datas
+            }]
+        };
+        // 使用刚指定的配置项和数据显示图表。
+        myChart.setOption(option);
+    }
+
+    function setTestResult(result) {
+        var oldLevelText = "";
+        var color = "#00F9FF";
+        if (result.level == 1) {
+            oldLevelText = "一级老化";
+            color = "#00F9FF";
+        } else if (result.level == 2) {
+            oldLevelText = "二级老化";
+            color = "#8BC974";
+        }
+        if (result.level == 3) {
+            oldLevelText = "三级老化";
+            color = "#FF6200"
+        }
+        arcProgress.open({
+            type: 'annular ',
+            centerX: api.frameWidth / 6 * (2 * 1 + 1),
+            centerY: $api.cssVal($api.dom('#pie'), 'height'),
+            radius: api.frameWidth / 5,
+            bgColor: '#005066',
+            pgColor: color,
+            loopWidth: 10,
+            fixedOn: api.frameName
+        }, function(ret, err) {
+            pieId = ret.id;
+            arcProgress.setValue({
+                id: pieId,
+                value: result.level * 100 / 3
+            });
+        });
+        $api.text($api.dom('#material'), result.material);
+        $api.text($api.dom('#levelText'), oldLevelText);
+
+    }
+</script>

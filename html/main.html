@@ -1,142 +1,157 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0" />
     <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
     <title>Hyscan</title>
-    <link rel="stylesheet" type="text/css" href="../css/api.css"/>
-    <link rel="stylesheet" type="text/css" href="../css/style.css"/>
+    <link rel="stylesheet" type="text/css" href="../css/api.css" />
+    <link rel="stylesheet" type="text/css" href="../css/style.css" />
     <link rel="stylesheet" type="text/css" href="../css/index.css" />
 </head>
-<body>
-	<div class="title">
-		<span class="btn_logo">设置</span>
-		HyScan
-	</div>
-	<ul class="steps">
-		<li>
-			<img src="../img/step01.png" />
-			<div class="txt01">
-				<span class="tag">Step-1</span>
-				<p>开启设备开关</p>
-				<p>打开蓝牙连接</p>
-				<p>并绑定设备</p>
-			</div>
-		</li>
-		<li>
-			<img src="../img/step02.png" />
-			<div class="txt01">
-				<span class="tag">Step-2</span>
-				<p>点击开始采集按钮</p>
-				<p>将设备对准被采集</p>
-				<p>物体</p>
-			</div>
-		</li>
-		<li>
-			<img src="../img/step03.png" />
-			<div class="txt01">
-				<span class="tag">Step-3</span>
-				<p>查看并保存检测</p>
-				<p>结果</p>
-			</div>
-		</li>
-	</ul>
 
-	<div class="footer">
-		<ul>
-			<li class="f_map" onclick="gotoMap( this );">地图</li>
-			<li class="f_scan" onclick="beginCollect( this );">
-				扫描
-			</li>
-			<li class="f_me" onclick="gotoMe( this );">我</li>
-			<img src="../img/icon_selected.png" class="sel"/>
-		</ul>
-	</div>
-	<!-- 是否扫描 -->
-	<div class="scan">
-		<div class="stxt">是否进行拍照？</div>
-		<div class="sbtn">
-			<span class="yes">确定</span>
-			<span class="no">取消</span>
-		</div>
-	</div>
+<body>
+    <div class="title">
+        <span class="btn_logo">设置</span> HyScan
+    </div>
+    <ul class="steps">
+        <li>
+            <img src="../img/step01.png" />
+            <div class="txt01">
+                <span class="tag">Step-1</span>
+                <p>开启设备开关</p>
+                <p>打开蓝牙连接</p>
+                <p>并绑定设备</p>
+            </div>
+        </li>
+        <li>
+            <img src="../img/step02.png" />
+            <div class="txt01">
+                <span class="tag">Step-2</span>
+                <p>点击开始采集按钮</p>
+                <p>将设备对准被采集</p>
+                <p>物体</p>
+            </div>
+        </li>
+        <li>
+            <img src="../img/step03.png" />
+            <div class="txt01">
+                <span class="tag">Step-3</span>
+                <p>查看并保存检测</p>
+                <p>结果</p>
+            </div>
+        </li>
+    </ul>
+
+    <div class="footer">
+        <ul>
+            <li class="f_map" onclick="gotoMap( this );">地图</li>
+            <li class="f_scan" onclick="prepareCollect( this );">
+                扫描
+            </li>
+            <li class="f_me" onclick="gotoMe( this );">我</li>
+            <img src="../img/icon_selected.png" class="sel" />
+        </ul>
+    </div>
+    <!-- 是否扫描 -->
+    <div class="scan">
+        <div class="stxt">是否进行拍照？</div>
+        <div class="sbtn">
+            <span class="yes">确定</span>
+            <span class="no">取消</span>
+        </div>
+    </div>
 </body>
+
 </html>
 <script type="text/javascript" src="../script/api.js"></script>
 <script type="text/javascript" src="../script/app.js"></script>
+<script type="text/javascript" src="../script/navi.js"></script>
+<script type="text/javascript" src="../script/spp.js"></script>
 <script type="text/javascript" src="../script/device.js"></script>
 <script>
-    apiready = function () {
-        //$api.fixStatusBar( $api.dom('.title') );
-      //  $api.fixStatusBar( $api.dom('.title') );
-        // api.setStatusBarStyle({
-        //     //style: 'dark',
-        //     //color: '#6ab494'
-        // });
-        //检测是否绑定蓝牙设备如果绑定
-        stDevice.isDeviceOk(function(ret){
-            console.log(JSON.stringify(ret));
-            if (ret.status) {
-                console.log(JSON.stringify(ret.device));
-            } else {
-                setTimeout(gotoScanDevice, 1000);
-                //gotoScanDevice();
-            }
-        });
-
+    apiready = function() {
+        var backSecond = 0;
         api.addEventListener({
             name: 'keyback'
         }, function(ret, err) {
+            var curSecond = new Date().getSeconds();
+            if (Math.abs(curSecond - backSecond) > 2) {
+                backSecond = curSecond;
+                api.toast({
+                    msg: '连续按两次关闭系统',
+                    duration: 2000,
+                    location: 'bottom'
+                });
+            } else {
+                api.closeWidget({
+                    id: 'A6050909206139', //这里改成自己的应用ID
+                    retData: {
+                        name: 'closeWidget'
+                    },
+                    silent: true
+                });
+            }
         });
-
     }
 
-    $api.addEvt($api.dom('.btn_logo'), 'click', function(){
-      api.openDrawerPane({
-          type: 'left'
+
+    function prepareCollect() {
+        //检测是否绑定蓝牙设备如果绑定尝试连接设备
+        api.showProgress({
+            title: '扫描设备中...',
+            text: '很快的...'
+        });
+        sppUtil.init(function(blut) {
+            if (blut.status == "poweredOn") {
+                stDevice.isDeviceOk(function(deviceRet) {
+                    api.hideProgress();
+                    if (deviceRet.status == 0) {
+                        console.log("光谱仪连接正常");
+                        beginCollect();
+                    } else if (deviceRet.status == -1) {
+                        setTimeout(gotoScanDevice, 1000);
+                    } else if (deviceRet.status == -2) {
+                        api.confirm({
+                            title: '未能连接光谱仪',
+                            msg: '连接光谱仪错误,检查设备后重新连接或者连接新设备',
+                            buttons: ['重新连接', '新设备']
+                        }, function(ret, err) {
+                            if (ret) {
+                                if (ret.buttonIndex == 1) {
+                                    prepareCollect();
+                                } else {
+                                    setTimeout(gotoScanDevice, 1000);
+                                }
+                            } else {
+                                alert(JSON.stringify(err));
+                            }
+                        });
+                    } else if (deviceRet.status == 1) {
+                        console.log("需要读取设备信息");
+                        stDevice.readDeviceInfo(deviceRet.device.address, function() {
+                            sppUtil.disconnectDevice(deviceRet.device.address, function() {
+                                window.locaton.reload();
+                            });
+                        });
+                    } else if (deviceRet.status == 2) {
+                        console.log("需要进行设备定标");
+                        setTimeout(gotoRevise, 1000);
+                    }
+                });
+            } else {
+                api.alert({
+                    title: '错误',
+                    msg: blut.show.status,
+                });
+            }
+        });
+    }
+
+    $api.addEvt($api.dom('.btn_logo'), 'click', function() {
+        api.openDrawerPane({
+            type: 'left'
         });
     });
-
-
-    function gotoMap(){
-      // api.alert({
-      //     title: '敬请期待',
-      //     msg: '开发中',
-      // }, function(ret, err){
-      //     // if( ret ){
-      //     //      alert( JSON.stringify( ret ) );
-      //     // }else{
-      //     //      alert( JSON.stringify( err ) );
-      //     // }
-      // });
-      //
-      // return;
-      api.openWin({
-          name: 'map',
-          url: 'map.html'
-      });
-    }
-
-    function gotoMe(){
-        api.openWin({
-            name: 'my',
-            url: 'my.html'
-        });
-    }
-
-    function beginCollect(){
-        //scaner.beginScan();//发送开始扫描命令
-        api.openWin({
-            name: 'collect',
-            url: './collect.html'
-        });
-    }
-
-    function gotoScanDevice(){
-        api.openWin({
-            name: 'connect',
-            url: 'connect.html'
-        });
-    }
 </script>
