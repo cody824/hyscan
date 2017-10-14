@@ -1,92 +1,260 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="utf-8">
-    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
-    <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
-    <link rel="stylesheet" type="text/css" href="../css/api.css"/>
-    <link rel="stylesheet" type="text/css" href="../css/style.css"/>
-    <link rel="stylesheet" type="text/css" href="../css/index.css" />
-	    <title>登录</title>
-		<style>
-        	::-webkit-input-placeholder { /* WebKit browsers */
-			 color:#fff;
-			}
-			:-moz-placeholder { /* Mozilla Firefox 4 to 18 */
-			 color:#fff;
-			 opacity:1;
-			}
-			::-moz-placeholder { /* Mozilla Firefox 19+ */
-			 color:#fff;
-			 opacity:1;
-			}
-			:-ms-input-placeholder { /* Internet Explorer 10+ */
-			 color:#fff;
-			}
 
-		</style>
-	</head>
-	<body>
-		<img src="../img/login_bg.jpg" class="login_bg" />
-		<img src="../img/login_logo.png" class="logo" />
-		<div class="login_con">
-			<input type="txt" class="name" placeholder="请输入用户名" />
-			<input type="password" class="pwd" placeholder="请输入密码" />
-		</div>
-		<div style="width: 100%; height: auto; overflow: hidden; position: relative; z-index: 99;">
-			<a class="login_btn login" id="loginBtn" href="#">登 录</a>
-	        <p class="pass_forget">忘记密码？</p>
-	        <a class="login_btn register" href="register.html">注 册</a>
-		</div>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0" />
+	<meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+	<link rel="stylesheet" type="text/css" href="../css/api.css" />
+	<link rel="stylesheet" type="text/css" href="../css/style.css" />
+	<link rel="stylesheet" type="text/css" href="../css/index.css" />
+	<title>登录</title>
+	<style>
+		::-webkit-input-placeholder {
+			/* WebKit browsers */
+			color: #fff;
+		}
 
-		<div class="login_methods">
-			<span>第三方登录</span>
-			<span>
+		:-moz-placeholder {
+			/* Mozilla Firefox 4 to 18 */
+			color: #fff;
+			opacity: 1;
+		}
+
+		::-moz-placeholder {
+			/* Mozilla Firefox 19+ */
+			color: #fff;
+			opacity: 1;
+		}
+
+		:-ms-input-placeholder {
+			/* Internet Explorer 10+ */
+			color: #fff;
+		}
+	</style>
+</head>
+
+<body>
+	<img src="../img/login_bg.jpg" class="login_bg" />
+	<img src="../img/login_logo.png" class="logo" />
+	<div class="login_con">
+		<input type="txt" class="name" placeholder="请输入用户名" />
+		<input type="password" class="pwd" placeholder="请输入密码" />
+	</div>
+	<div style="width: 100%; height: auto; overflow: hidden; position: relative; z-index: 99;">
+		<a class="login_btn login" id="loginBtn" href="#">登 录</a>
+		<p class="pass_forget"><!--忘记密码？--></p>
+		<a class="login_btn register" href="javascript:gotoRegister();">注 册</a>
+	</div>
+
+	<div class="login_methods">
+		<span>第三方登录</span>
+		<span id="qq">
 				<img src="../img/icon_qq.png" />
 			</span>
-			<span>
+		<span id="wechat">
 				<img src="../img/icon_wechat.png" />
 			</span>
-			<span>
+		<span id="weibo">
 				<img src="../img/icon_weibo.png" />
 			</span>
-		</div>
+	</div>
 
-	</body>
+</body>
+
 </html>
 <script type="text/javascript" src="../script/api.js"></script>
 <script type="text/javascript" src="../script/app.js"></script>
+<script type="text/javascript" src="../script/navi.js"></script>
 <script>
-
-		$api.addEvt($api.dom('#loginBtn'), 'click', function(){
-				var userName = $api.val($api.dom('input.name'));
-				var password = $api.val($api.dom('input.pwd'));
-				login(userName, password, function(ret, err){
-						if (ret.status) {
-							api.openDrawerLayout({
-									name :'main',
-									url: 'main.html',
-									animation : {
-											type:"none",                //动画类型（详见动画类型常量）
-											subType:"from_left",       //动画子类型（详见动画子类型常量）
-											duration:300                //动画过渡时间，默认300毫秒
-									},
-									leftPane: {
-											edge: api.winWidth * 0.4,
-											name: 'slider',
-											url: 'slider.html'
-									}
-							}, function(ret, err) {
-
-							});
-						} else {
-								api.alert({
-								    title: '登录错误',
-								    msg: err.msg,
-								}, function(ret, err){
-								});
-
-						}
-				})
+	apiready = function() {
+		var wx = api.require('wx');
+		wx.isInstalled(function(ret, err) {
+			if (ret.installed) {} else {
+				$api.css($api.dom('#wechat'), 'display:none;')
+			}
 		});
+		var qq = api.require('qq');
+		qq.installed(function(ret, err) {
+			if (ret.status) {} else {
+				$api.css($api.dom('#qq'), 'display:none;')
+			}
+		});
+		if (!globalConfig.login.qq) {
+			$api.css($api.dom('#qq'), 'display:none;')
+		}
+		if (!globalConfig.login.wechat) {
+			$api.css($api.dom('#wechat'), 'display:none;')
+		}
+		if (!globalConfig.login.weibo) {
+			$api.css($api.dom('#weibo'), 'display:none;')
+		}
+	}
+
+	function gotoRegister() {
+		api.openWin({
+			reload: true,
+			name: 'register',
+			url: './register.html'
+		});
+	}
+
+	$api.addEvt($api.dom("#weibo"), 'click', function() {
+		var weibo = api.require('weibo');
+		weibo.auth(function(ret, err) {
+			if (ret.status) {
+				weibo.getUserInfo({
+					token: ret.token,
+					userId: ret.userId
+				}, function(ret, err) {
+					if (ret.status) {
+						tpaLogin('weibo', ret.userInfo, function(ret, err) {
+							if (ret.status) {
+								gotoMain();
+							} else {
+								var msg = "未知错误";
+								if (err && err.msg)
+									msg = err.msg;
+								api.alert({
+									title: '登录错误',
+									msg: msg,
+								});
+							}
+						});
+					}
+				});
+			} else {
+				alert(JSON.stringify(err));
+			}
+		});
+	});
+
+	$api.addEvt($api.dom("#qq"), 'click', function() {
+		var qq = api.require('qq');
+		qq.login(function(ret, err) {
+			if (ret.status) {
+				var openId = ret.openId;
+				qq.getUserInfo(function(ret, err) {
+					if (ret.status) {
+						var userInfo = ret.info;
+						userInfo.idstr = "" + openId;
+						tpaLogin('qq', userInfo, function(ret, err) {
+							if (ret.status) {
+								gotoMain();
+							} else {
+								var msg = "未知错误";
+								if (err && err.msg)
+									msg = err.msg;
+								api.alert({
+									title: '登录错误',
+									msg: msg,
+								});
+							}
+						});
+					} else {
+						api.alert({
+							msg: err.msg
+						});
+					}
+				});
+			} else {
+				alert(JSON.stringify(err));
+			}
+		});
+	});
+
+	$api.addEvt($api.dom("#wechat"), 'click', function() {
+		var wx = api.require('wx');
+		wx.auth({
+			apiKey: ''
+		}, function(ret, err) {
+			if (ret.status) {
+				var code = ret.code;
+				wx.getToken({
+					code: code
+				}, function(ret, err) {
+					if (ret.status) {
+						var accessToken = ret.accessToken;
+						var openId = ret.openId;
+						wx.getUserInfo({
+							accessToken: accessToken,
+							openId: openId
+						}, function(ret, err) {
+							if (ret.status) {
+								tpaLogin('wechat', ret, function(ret, err) {
+									if (ret.status) {
+										gotoMain();
+									} else {
+										var msg = "未知错误";
+										if (err && err.msg)
+											msg = err.msg;
+										api.alert({
+											title: '登录错误',
+											msg: msg,
+										});
+									}
+								});
+							} else {
+								if (err.code == 6) {
+									msg = '网络超时';
+								} else if (err.code == -1) {
+									msg = '未知错误';
+								} else if (err.code > 0) {
+									msg = "配置错误";
+								}
+								api.alert({
+									title: '无法登陆',
+									msg: msg,
+								});
+							}
+						});
+
+					} else {
+						if (err.code == 4) {
+							msg = '网络超时';
+						} else if (err.code == -1) {
+							msg = '未知错误';
+						} else if (err.code > 0) {
+							msg = "配置错误";
+						}
+						api.alert({
+							title: '无法登陆',
+							msg: msg,
+						});
+					}
+				});
+			} else {
+				if (err.code == 3) {
+					api.alert({
+						title: '无法登陆',
+						msg: '没有检测到您安装微信',
+					});
+				} else if (err.code == -1) {
+					api.alert({
+						title: '无法登陆',
+						msg: '未知错误',
+					});
+				}
+			}
+		});
+	});
+
+
+	$api.addEvt($api.dom('#loginBtn'), 'click', function() {
+		var userName = $api.val($api.dom('input.name'));
+		var password = $api.val($api.dom('input.pwd'));
+		login(userName, password, function(ret, err) {
+			if (ret.status) {
+				gotoMain();
+			} else {
+				var msg = "未知错误";
+				if (err && err.msg)
+					msg = err.msg;
+				api.alert({
+					title: '登录错误',
+					msg: msg,
+				});
+			}
+		})
+	});
 </script>

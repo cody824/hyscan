@@ -22,22 +22,27 @@
 			<span class="small-ico"></span>
 			<span class="ico-name">绑定设备</span>
 			<span class="btn" id='unbunding'>解绑</span>
-			<span class="ico-info">已绑定</span>
+			<span class="ico-info" id="bindStatus">已绑定</span>
 		</li>
 		<li class="clearfix jf" id="periodLi">
 			<span class="small-ico ico2"></span>
 			<span class="ico-name">积分时间</span>
-			<span class="ico-info ico-info2"><span id="period">500</span>ms</span>
+			<span class="ico-info ico-info2"><span id="period">255</span>ms</span>
 		</li>
 		<li class="clearfix cj" id="collectNumLi">
 			<span class="small-ico ico3"></span>
 			<span class="ico-name">平均采集次数</span>
-			<span class="ico-info ico-info3"><span id="collectNum">5</span>次</span>
+			<span class="ico-info ico-info3"><span id="collectNum">1</span>次</span>
 		</li>
 		<li class="clearfix" id='paramSetupLi'>
 			<span class="small-ico ico4"></span>
 			<span class="ico-name">光谱定标设置</span>
 			<span class="ico-info"></span>
+		</li>
+		<li class="clearfix" id='serverIpSetupLi' style="display:none;">
+			<span class="small-ico ico1"></span>
+			<span class="ico-name">服务器地址</span>
+			<span class="ico-info  ico-info2"><span id="serverIp"></span></span>
 		</li>
 	</ul>
 
@@ -46,20 +51,58 @@
 </html>
 <script type="text/javascript" src="../script/api.js"></script>
 <script type="text/javascript" src="../script/app.js"></script>
+<script type="text/javascript" src="../script/navi.js"></script>
+<script type="text/javascript" src="../script/spp.js"></script>
 <script type="text/javascript" src="../script/device.js"></script>
 <script>
 	var dialogBox;
-	var uiLoading;
 	var inputField;
+
+	var cn = appConfig.globalConfig.collectNum || 1;
+	var serverIp = appConfig.globalConfig.serverIp || "";
+
+	$api.text($api.dom('#collectNum'), cn);
+	$api.text($api.dom('#serverIp'), serverIp);
+	if (appConfig.device) {
+			$api.text($api.dom('#bindStatus'), "已绑定");
+			$api.text($api.dom('#unbunding'), "解绑");
+	} else {
+			$api.text($api.dom('#bindStatus'), "未绑定");
+			$api.text($api.dom('#unbunding'), "绑定设备");
+	}
+	if (isDev) {
+		$api.css($api.dom("#serverIpSetupLi"), 'display:block;');
+	}
+
+
+
 	apiready = function() {
 		dialogBox = api.require('dialogBox');
-		uiLoading = api.require('UILoading');
 		inputField = api.require('inputField');
-
-
+		sppUtil.init(function(){
+				stDevice.isDeviceOk(function(ret){
+						if(ret.status >= 0) {
+							   hyCmd.receive(appConfig.device.address)
+						}
+				})
+		});
+		api.addEventListener({
+				name:'keyback'
+		}, function(ret, err){
+			if (appConfig.device)
+			 	sppUtil.disconnectDevice(appConfig.device.address);
+			 api.historyBack({
+			 },function(ret,err){
+					 if(!ret.status){
+							 api.closeWin();
+					 }
+			 });
+		});
 	}
 
 	$api.addEvt($api.dom('.btn_logo'), 'click', function(){
+			if (appConfig.device)
+		   		sppUtil.disconnectDevice(appConfig.device.address);
 				api.historyBack({
 				},function(ret,err){
 				    if(!ret.status){
@@ -69,15 +112,16 @@
 	});
 
 	$api.addEvt($api.dom('#paramSetupLi'), 'click', function(){
-				api.openWin({
-				    name: 'revise',
-				    url: './revise.html'
-				});
-
+				sppUtil.disconnectDevice(appConfig.device.address);
+				gotoRevise();
 	});
 
-
 	$api.addEvt($api.dom('#unbunding'), 'click', function(){
+		if (!appConfig.device) {
+				gotoScanDevice();
+				return;
+		}
+
 		dialogBox.confirm({
 				tapClose: false,
 				msg: {
@@ -108,19 +152,15 @@
 			 }
 	 }
 			}, function(ret) {
-    			console.log(JSON.stringify(ret));
 					dialogBox.close({
 					    dialogName: 'confirm'
 					});
 					if (ret.eventType == "ok") {
-							stDevice.removeDevice();
-							api.historyBack({
-							},function(ret,err){
-							    if(!ret.status){
-							        api.closeWin();
-							    }
-							});
-
+							sppUtil.disconnectDevice(appConfig.device.address, function(){
+									appConfig.device = null;
+									saveAppConfig();
+									gotoMain();
+							})
 					}
 		});
 	});
@@ -131,6 +171,10 @@
 	$api.addEvt($api.dom('#collectNumLi'), 'click', function(){
 			var num = $api.text($api.dom('#collectNum'));
 			setupCollectNum(num);
+	});
+	$api.addEvt($api.dom('#serverIpSetupLi'), 'click', function(){
+			var serverIp = $api.text($api.dom('#serverIp'));
+			setupServerIp(serverIp);
 	});
 
 	function setupCollectNum(current) {
@@ -154,7 +198,17 @@
 			if (ret.eventType == 'left') {
 				// doSaveLocal(ret.text);
 			} else if (ret.eventType == 'right') {
+				 var collectNum = parseInt(ret.text);
+				 if (collectNum < 1 || collectNum > 10) {
+					 		api.alert({
+					 		    title: '输入错误',
+					 		    msg: '只能输入1-10之间的数',
+					 		});
+							return;
+				 }
 				// doSaveRemote(ret.text);
+				 appConfig.globalConfig.collectNum = collectNum;
+				 saveAppConfig();
 				 $api.text($api.dom('#collectNum'), ret.text);
 			}
 		});
@@ -173,7 +227,6 @@
 			styles: dialogStyles ,
 			tapClose: true
 		}, function(ret) {
-			console.log(JSON.stringify(ret));
 			dialogBox.close({
 				dialogName: 'input'
 			});
@@ -181,8 +234,45 @@
 			if (ret.eventType == 'left') {
 				// doSaveLocal(ret.text);
 			} else if (ret.eventType == 'right') {
-				// doSaveRemote(ret.text);
+				var period = parseInt(ret.text);
+				if (period > 255 || period < 1){
+						api.alert({
+								title: '输入错误',
+								msg: '只能输入1-255之间的数',
+						});
+						return;
+				}
+				 hyCmd.periodSetup(appConfig.device.address, period);
 				 $api.text($api.dom('#period'), ret.text);
+			}
+		});
+	}
+
+	function setupServerIp(current) {
+		dialogBox.input({
+			keyboardType: 'forbid',
+			texts: {
+				title: '服务器IP',
+				default : current,
+				placeholder: '请输入服务器IP',
+				leftBtnTitle: '取消',
+				rightBtnTitle: '确定'
+			},
+			styles: dialogStyles ,
+			tapClose: true
+		}, function(ret) {
+			dialogBox.close({
+				dialogName: 'input'
+			});
+
+			if (ret.eventType == 'left') {
+				// doSaveLocal(ret.text);
+			} else if (ret.eventType == 'right') {
+				 var serverIp = ret.text;
+				 appConfig.globalConfig.serverIp = serverIp;
+				 saveAppConfig();
+				 loadAppConfig();
+				 $api.text($api.dom('#serverIp'), ret.text);
 			}
 		});
 	}

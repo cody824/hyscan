@@ -1,49 +1,160 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="utf-8">
-    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
-    <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
-    <link rel="stylesheet" type="text/css" href="../css/api.css"/>
-    <link rel="stylesheet" type="text/css" href="../css/style.css"/>
-    <link rel="stylesheet" type="text/css" href="../css/index.css" />
-		<title>地图</title>
-	</head>
-	<body>
-	</body>
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0" />
+	<meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+	<link rel="stylesheet" type="text/css" href="../css/api.css" />
+	<link rel="stylesheet" type="text/css" href="../css/style.css" />
+	<link rel="stylesheet" type="text/css" href="../css/index.css" />
+	<title>地图</title>
+</head>
+
+<body>
+</body>
+
 </html>
-<!-- <script type="text/javascript" src="../script/api.js"></script> -->
-<script type="text/javascript" src="../script/dp.js"></script>
+<script type="text/javascript" src="../script/api.js"></script>
+<script type="text/javascript" src="../script/task.js"></script>
+<script type="text/javascript" src="../script/navi.js"></script>
 <script>
-		var map;
+	var map;
+	var annotations;
+	var lonLatTask = {};
 
-		apiready = function(){
-				map = api.require('bMap');
-				openMap();
-		}
+	apiready = function() {
+		map = api.require('bMap');
+		//initTaskInfo(openMap)
+		openMap(initTaskInfo);
+		api.addEventListener({
+			name: 'keyback'
+		}, function(ret, err) {
+			gotoMain();
+		});
+		api.addEventListener({
+			name: 'viewdisappear'
+		}, function(ret, err) {
+			api.closeWin('map');
+		});
+	}
 
-		function openMap(){
-			map.open({
-			    // rect: {
-			    //     x: 0,
-			    //     y: 0,
-			    //     w: 320,
-			    //     h: 300
-			    // },
-			    center: {
-			        lon: 116.4021310000,
-			        lat: 39.9994480000
-			    },
-			    zoomLevel: 10,
-			    showUserLocation: true,
-			    fixedOn: api.frameName,
-			    fixed: true
-			}, function(ret, err) {
-					console.log(JSON.stringify(ret));
-						console.log(JSON.stringify(err));
-			    if (ret.status) {
-			        alert('地图打开成功');
-			    }
-			});
-		}
+	function openMap(callback) {
+		map.open({
+			center: {
+				lon: 116.4021310000,
+				lat: 39.9994480000
+			},
+			zoomLevel: 10,
+			//showUserLocation: true,
+			fixedOn: api.frameName,
+			fixed: true
+		}, function(ret, err) {
+			if (ret.status) {
+				callback();
+			}
+		});
+	}
+
+	function initTaskInfo(callback) {
+		stTask.findTask(function(tasks) {
+			lonLatTask = {};
+			annotations = [];
+			var id = 0;
+			if (tasks.length > 0) {
+				for (var i = 0; i < tasks.length; i++) {
+					var task = tasks[i];
+					if (task.position) {
+						var annotation = lonLatTask[task.position.lon + "_" + task.position.lat] || {tasks : []};
+						if(!annotation.id) {
+							annotation.id = id++;
+							annotation.lon = task.position.lon;
+							annotation.lat = task.position.lat;
+							annotation.tasks.push(task);
+							lonLatTask[task.position.lon + "_" + task.position.lat] = annotation;
+						} else {
+							annotation.tasks.push(task);
+						}
+					}
+				}
+			}
+			for(var lonlat in lonLatTask){
+				annotations.push(lonLatTask[lonlat]);
+			}
+			if (annotations.length > 0) {
+				var lbLon = 1000,
+					lbLat = 1000,
+					rtLon = 0,
+					rtLat = 0;
+				var centerLon = 0,
+					centerLat = 0;
+				for (var i = 0; i < annotations.length; i++) {
+					var annotation = annotations[i];
+					centerLon += annotation.lon;
+					centerLat += annotation.lat;
+					lbLon = lbLon < annotation.lon ? lbLon : annotation.lon;
+					lbLat = lbLat < annotation.lat ? lbLat : annotation.lat;
+					rtLon = rtLon > annotation.lon ? rtLon : annotation.lon;
+					rtLat = rtLat > annotation.lat ? rtLat : annotation.lat;
+				}
+				centerLon = centerLon / annotations.length;
+				centerLat = centerLat / annotations.length;
+				map.addAnnotations({
+					annotations: annotations,
+				}, function(ret) {
+					console.log(JSON.stringify(ret))
+				});
+				map.setCenter({
+					coords: {
+						lon: centerLon,
+						lat: centerLat
+					},
+					animation: true
+				});
+
+				map.setRegion({
+					lbLon: lbLon - 0.1,
+					lbLat: lbLat - 0.1,
+					rtLon: rtLon + 0.1,
+					rtLat: rtLat + 0.1,
+					animation: true
+				});
+				for (var i = 0; i < annotations.length; i++) {
+					var annotation = annotations[i];
+					var title = "共有" + annotation.tasks.length + "个任务";
+					var subTitle = "";
+					for (var i = 0; i < annotation.tasks.length; i++){
+						var task = annotation.tasks[i];
+						subTitle += task.result.material + "(" + task.result.level + "级老化)" + "|";
+					}
+
+					map.setBubble({
+						id: i,
+						content: {
+							title: title,
+							subTitle: subTitle,
+						},
+						styles: {
+							titleColor: '#000',
+							titleSize: 16,
+							subTitleColor: '#999',
+							subTitleSize: 12,
+							illusAlign: 'left'
+						}
+					}, function(ret) {
+						if (ret) {
+							console.log(JSON.stringify(ret));
+							if (ret.eventType == "clickContent") {
+								var task = annotations[ret.id].tasks[0];
+								stTask.getTask(task.id, true, function(ret) {
+									if (ret.status)
+										gotoTaskInfo(ret.task, "map");
+								})
+							}
+						}
+					});
+				}
+			}
+		})
+	}
 </script>

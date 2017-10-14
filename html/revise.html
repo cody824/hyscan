@@ -1,140 +1,159 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0" />
-		<meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
-		<link rel="stylesheet" type="text/css" href="../css/api.css" />
-		<link rel="stylesheet" type="text/css" href="../css/style.css" />
-		<link rel="stylesheet" type="text/css" href="../css/index.css" />
-	  <title>校对</title>
-	</head>
-	<body style="background:url(../img/main_bg.jpg) no-repeat; background-size:100%;">
-		<div class="title">
-			HyScan
-		</div>
-		<!--状态01 暗流区-->
-		<div class="jiaodui state01">
-			<img src="../img/check_img02.png" />
-			<div class="jd_txt" >
-				<span class="jd_tag">采集暗流区</span>
-				<p>请将设备扫描口对准</p>
-				<p>无光环境，您可以用</p>
-				<p>不透光物体遮挡扫描</p>
-				<p>口，比如用手遮挡。</p>
-			</div>
-		</div>
-		<!-- 状态02-光谱定标区 -->
-		<div class="jiaodui state02">
-			<img src="../img/check_img01.png" />
-			<div class="jd_txt" >
-				<span class="jd_tag" style="background: #07d7d0;">光谱定标</span>
-				<p>请将设备扫描口对准</p>
-				<p>反光板，确保周围光</p>
-				<p>源明亮，光线充足。</p>
-			</div>
-		</div>
-		<!-- 状态03 采集中 -->
-		<div class="jiaodui state03">
-			<img src="../img/cj02.png" />
-		</div>
 
-		<!-- 状态04 采集ok -->
-		<div class="jiaodui state04">
-			<img src="../img/cj04.png" />
-		</div>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0" />
+	<meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+	<link rel="stylesheet" type="text/css" href="../css/api.css" />
+	<link rel="stylesheet" type="text/css" href="../css/style.css" />
+	<link rel="stylesheet" type="text/css" href="../css/index.css" />
+	<title>校对</title>
+</head>
 
-		<div class="link_btn">
-			开始采集
+<body style="background:url(../img/main_bg.jpg) no-repeat; background-size:100%;">
+	<div class="title">
+		HyScan
+	</div>
+	<!--状态01 暗流区-->
+	<div class="jiaodui state01">
+		<img src="../img/check_img02.png" />
+		<div class="jd_txt">
+			<span class="jd_tag">采集暗流区</span>
+			<p>请将设备扫描口对准</p>
+			<p>无光环境，您可以用</p>
+			<p>不透光物体遮挡扫描</p>
+			<p>口，比如用手遮挡。</p>
 		</div>
-		<div class=" mes message01">设备已连接</div>
-		<div class="mes message02">设备已连接</div>
+	</div>
+	<!-- 状态02-光谱定标区 -->
+	<div class="jiaodui state02">
+		<img src="../img/check_img01.png" />
+		<div class="jd_txt">
+			<span class="jd_tag" style="background: #07d7d0;">光谱定标</span>
+			<p>请将设备扫描口对准</p>
+			<p>反光板，确保周围光</p>
+			<p>源明亮，光线充足。</p>
+		</div>
+	</div>
+	<!-- 状态03 采集中 -->
+	<!-- <div class="jiaodui state03">
+		<img src="../img/cj02.png" />
+	</div> -->
 
-	</body>
+	<!-- 状态04 采集ok -->
+	<div class="jiaodui state04">
+		<img src="../img/cj04.png" />
+	</div>
+
+	<div class="link_btn">
+		开始采集
+	</div>
+	<div class=" mes message01">设备已连接</div>
+	<div class="mes message02">设备已连接</div>
+
+</body>
+
 </html>
 <script type="text/javascript" src="../script/api.js"></script>
+<script type="text/javascript" src="../script/app.js"></script>
+<script type="text/javascript" src="../script/navi.js"></script>
+<script type="text/javascript" src="../script/spp.js"></script>
+<script type="text/javascript" src="../script/dp.js"></script>
+<script type="text/javascript" src="../script/device.js"></script>
 <script>
 	var blankOk = false;
+	var collectIng = false;
+	var stopNum = 0;
 
-	$api.addEvt($api.dom('.link_btn'), 'click', function(){
-			doCollect();
+	$api.addEvt($api.dom('.link_btn'), 'click', function() {
+		doCollect();
 	});
 
+	$api.css($api.dom('.state01'), 'display:block;');
+	$api.css($api.dom('.state02'), 'display:none;');
+	$api.css($api.dom('.state04'), 'display:none;');
+	$api.attr($api.dom('.state04 img'), 'src', '../img/cj04.png');
 
-
-	apiready = function(){
-
+	apiready = function() {
+		sppUtil.init(function() {
+			sppUtil.connectDevice(appConfig.device.address, function(ret) {
+				console.log(JSON.stringify(ret));
+				if (ret.err) {
+					api.alert({
+						title: '错误',
+						msg: ret.err,
+					}, function() {
+						setTimeout(gotoScanDevice, 1000);
+					});
+				} else {
+					hyCmd.receive(appConfig.device.address, {
+						collect: saveDatas,
+						stopCollect: function() {
+							if (!collectIng || !DPTool.isDataOk())return;
+							collectIng = false;
+							api.hideProgress();
+							var finallyData = DPTool.getFinallyData();
+							console.log(finallyData);
+							if (blankOk) {
+								appConfig.device.whiteboardData = finallyData;
+								if (appConfig.device.darkCurrent && appConfig.device.whiteboardData) {
+									var dc = [];
+									dc.push(appConfig.device.darkCurrent);
+									dc.push(appConfig.device.whiteboardData);
+									api.writeFile({
+											path: 'fs://dc/' + appConfig.device.address,
+											data: JSON.stringify(dc)
+									}, function(ret, err){
+									});
+								}
+								saveAppConfig();
+								$api.attr($api.dom('.state04 img'), 'src', '../img/cj03.png');
+								$api.css($api.dom('.state04'), 'display:block;');
+								$api.css($api.dom('.state02'), 'display:none;');
+								blankOk = false;
+								sppUtil.disconnectDevice(appConfig.device.address, function(ret) {
+									console.log(JSON.stringify(ret));
+									gotoMain();
+								});
+							} else {
+								appConfig.device.darkCurrent = finallyData;
+								saveAppConfig();
+								$api.css($api.dom('.state01'), 'display:none;');
+								$api.css($api.dom('.state04'), 'display:block;');
+								blankOk = true;
+								setTimeout(function() {
+									$api.css($api.dom('.state04'), 'display:none;');
+									$api.css($api.dom('.state02'), 'display:block;');
+								}, 500);
+							}
+						}
+					});
+				}
+			});
+		});
 	}
 
-	function doCollect(){
-			if (!blankOk) {
-				$api.css($api.dom('.state01'), 'display:none;');
-				$api.css($api.dom('.state02'), 'display:none;');
-				$api.css($api.dom('.state03'), 'display:block;');
-				$api.css($api.dom('.state04'), 'display:none;');
-				setTimeout(function(){
-					$api.css($api.dom('.state04'), 'display:block;');
-					$api.css($api.dom('.state03'), 'display:none;');
-					blankOk = true;
-					setTimeout(function(){
-								$api.css($api.dom('.state04'), 'display:none;');
-								$api.css($api.dom('.state02'), 'display:block;');
-					}, 500);
-
-				}, 1000);
-			} else {
-				$api.css($api.dom('.state01'), 'display:none;');
-				$api.css($api.dom('.state02'), 'display:none;');
-				$api.css($api.dom('.state03'), 'display:block;');
-				$api.css($api.dom('.state04'), 'display:none;');
-				setTimeout(function(){
-					$api.attr($api.dom('.state04 img'), 'src', '../img/cj03.png');
-					$api.css($api.dom('.state04'), 'display:block;');
-					$api.css($api.dom('.state03'), 'display:none;');
-					blankOk = false;
-					setTimeout(function(){
-							api.historyBack({
-							},function(ret,err){
-							    if(!ret.status){
-							        api.closeWin();
-							    }
-										api.closeDrawerPane();
-							});
-					}, 500);
-				}, 1000);
-			}
-
-
+	function saveDatas(datas) {
+		if (collectIng){
+				DPTool.addData(datas);
+				if (!DPTool.isDataOk()) {
+					return;
+				}
+		}
+		hyCmd.stopCollect(appConfig.device.address);
 	}
 
-	// $('.state01').show();
-	// $('.link_btn').click(function(){
-		// setTimeout(function () {
-		// 	console.log(1);
-		// 		$(".state01").hide();
-		// 	$(".state02").show();
-		// 	},500);
-		// 	setTimeout(function () {
-		// 		console.log(2);
-		// 		$(".state01, .state02").hide();
-		// 	$(".state03").show();
-		// 	},1500);
-		// 	setTimeout(function () {
-		// 		console.log(3);
-		// 		$(".state01, .state02, .state03").hide();
-		// 		$(".state04").show();
-		// 	},2500);
 
-
-
-//				console.log('准备开始采集');
-//				$(".state01").hide();
-//				$(".state02").show();
-//				console.log('采集进行中');
-//				$(".state01, .state02").hide();
-//				$(".state03").show();
-//				console.log('采集成功');
-//				$(".state01, .state02, .state03").hide();
-//				$(".state04").show();
-	// });
+	function doCollect() {
+		DPTool.initData();
+		hyCmd.collect(appConfig.device.address, function() {
+				collectIng = true;
+				api.showProgress({
+				    title: '采集中...',
+				    text: '请稍后...',
+				    modal: true
+				});
+		});
+	}
 </script>

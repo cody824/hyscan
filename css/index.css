@@ -52,12 +52,6 @@ input:focus {
 .steps li:last-child {
 	border: none;
 }
-.steps li:nth-child(2) .tag{
-	background: #00cfdc;
-}
-.steps li:nth-child(2) .tag{
-	background: #00adbc;
-}
 
 .steps .txt01{
 	position: absolute;
@@ -159,6 +153,7 @@ input:focus {
 	width: 90%;
 	height: 50px;
 	line-height: 50px;
+	white-space: nowrap;
 	margin: 35% 0 0 10%;
 }
 .h_img {
@@ -253,6 +248,15 @@ input:focus {
 	background: url(../img/jg_banner.png) no-repeat top center;
 	background-size: 100% auto;
 }
+
+.r_banner .task_name{
+	margin-top: 10px;
+	margin-left: 10px;
+	color: white;
+	position: absolute;
+}
+
+
 .pie {
 	width: 45%;
 	height: auto;
@@ -785,6 +789,7 @@ input:focus {
 	border-radius: 10px;
 	padding: 10px 2%;
 	margin-bottom: 3%;
+	position:relative;
 }
 .my-img {
 	float: left;
@@ -796,12 +801,27 @@ input:focus {
 	height: 80px;
 	margin-left: 3%;
 }
+.my-con img.delete_task {
+	position:absolute;
+	width:16px;
+	height:16px;
+	/*border:1px solid red;*/
+	right:5px;
+	top:10px;
+	z-index:100;
+}
+
+
 .my-con-title {
 	height: 20px;
 	line-height: 20px;
 	font-size: 16px;
 	color: #333333;
 	line-height: 24px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	width:100px;
 }
 .my-grade {
 	height: 14px;
@@ -842,10 +862,13 @@ input:focus {
 	font-size: 12px;
 	line-height: 20px;
 	color: #666666;
-	margin-left: 20px;
+	margin-left: 10px;
+	max-width: 80px;
+  overflow: hidden;
 }
 .info-wri2 {
 	color: #999999;
+	width: 80px;
 }
 /*设备*/
 .head-box {

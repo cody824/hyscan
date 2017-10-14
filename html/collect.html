@@ -42,44 +42,155 @@
 </html>
 <script type="text/javascript" src="../script/api.js"></script>
 <script type="text/javascript" src="../script/dp.js"></script>
-<script type="text/javascript" src="../script/ble.js"></script>
+<script type="text/javascript" src="../script/app.js"></script>
+<script type="text/javascript" src="../script/navi.js"></script>
+<script type="text/javascript" src="../script/spp.js"></script>
+<script type="text/javascript" src="../script/device.js"></script>
 <script type="text/javascript" src="../script/echarts.js"></script>
 <script type="text/javascript">
 	var myChart = echarts.init(document.getElementById('chart'));
-	var finallyData = [];
+	var spp;
+	var progressType;
+	var collecting = true;
+	var canBack = false;
 
 	apiready = function() {
-		$api.attr($api.dom('.chart'), 'width', api.winWidth);
-		bleInit(function(){
-			//connectDevice("DC:0D:30:00:0C:56");
+		api.addEventListener({
+				name: 'keyback'
+		}, function(ret, err) {
+				if (!canBack) {
+					api.toast({
+					    msg: '光谱采集中，不能返回',
+					    duration: 2000,
+					    location: 'bottom'
+					});
+				} else {
+					gotoMain();
+				}
 		});
-
-
-		DPTool.loadData(initChat, function(datas){
-				finallyData = datas;
+		spp = api.require("spp");
+		$api.attr($api.dom('.chart'), 'width', api.winWidth);
+		sppUtil.init(function() {
+			progressType = "collect";
+			api.showProgress({
+				style: 'default',
+				animationType: 'fade',
+				title: '光谱仪启动中',
+				text: '请耐心等待',
+				modal: false
+			});
+			sppUtil.connectDevice(appConfig.device.address, function(ret) {
+				hyCmd.receive(appConfig.device.address, {
+					collect: function(datas, labels) {
+						if (progressType == "collect") {
+							api.hideProgress();
+							progressType = "";
+						}
+						initChat(datas, labels);
+					},
+					stopCollect: function() {
+						collecting = false;
+						console.log("停止采集成功");
+						sppUtil.disconnectDevice(appConfig.device.address, function(ret) {});
+						api.hideProgress();
+						var finallyData = DPTool.getFinallyData();
+						if (finallyData) {
+							gotoResult(finallyData, DPTool.getXAxis());
+						} else {
+							api.alert({
+								title: '采集失败',
+								msg: '采集数据无效，请返回重试',
+							}, function() {
+								gotoMain();
+							});
+						}
+					}
+				});
+				console.log("发送连续采集命令");
+				hyCmd.collect(appConfig.device.address, function(ret) {
+					if (!ret.status) {
+						api.confirm({
+							title: '采集指令发送失败',
+							msg: '请检查与光谱仪连接状态，点击确定尝试重新连接',
+							buttons: ['确定', '取消']
+						}, function(ret, err) {
+							if (ret) {
+								if (ret.buttonIndex == 1) {
+									api.showProgress({
+										style: 'default',
+										animationType: 'fade',
+										title: '努力连接中...',
+										text: '先喝杯茶...',
+										modal: false
+									});
+									sppUtil.disconnectDevice(appConfig.device.address, function() {
+										sppUtil.connectDevice(appConfig.device.address, function(ret) {
+											api.hideProgress();
+											var msg = "";
+											if (ret.err) {
+												msg = '连接失败:' + ret.err;
+											} else {
+												msg = '连接成功';
+												window.location.reload();
+											}
+											api.toast({
+												msg: msg,
+												duration: 2000,
+												location: 'middle'
+											});
+										});
+									});
+								}
+							} else {
+								alert(JSON.stringify(err));
+							}
+						});
+					} else {
+						DPTool.initData();
+					}
+				});
+			});
 		});
 	}
 
 	$api.addEvt($api.dom('.c_btn img'), 'click', function() {
-		//connectDevice("DC:0D:30:00:0C:56");
-		sendData();
-		//gotoResult();
+		console.log("发送停止采集命令");
+		api.showProgress({
+			title: '采集停止中',
+			text: '请耐心等待',
+			modal: false
+		});
+
+		var stopI = setInterval(function () {
+			if (collecting) {
+				hyCmd.stopCollect(appConfig.device.address, function(ret) {
+					progressType == "stopCollect"
+					//collecting = false;
+					canBack = true;
+				});
+			} else {
+				clearInterval(stopI);
+			}
+		}, 1000);
 	});
 
-	function initChat(datas) {
+	function initChat(datas, labels) {
 		var i;
-		var min = 1000000,max = 0, average, sum = 0;
-		for (i = 0; i < datas.length; i++){
-				var data = datas[i];
-				if (data > max) max = data;
-				if (data < min) min = data;
-				sum += data;
+		var min = 1000000,
+			max = 0,
+			average, sum = 0;
+		for (i = 0; i < datas.length; i++) {
+			var data = datas[i];
+			if (data > max) max = data;
+			if (data < min) min = data;
+			sum += data;
 		}
-		average =  Math.round(sum / datas.length);
+		average = Math.round(sum / datas.length);
 		$api.text($api.dom('#dnMin'), min);
 		$api.text($api.dom('#dnMax'), max);
 		$api.text($api.dom('#dnAve'), average);
-		finallyData = datas;
+		DPTool.addData(datas);
+		DPTool.setXAxis(labels);
 
 		// 指定图表的配置项和数据
 		var option = {
@@ -149,15 +260,5 @@
 		};
 		// 使用刚指定的配置项和数据显示图表。
 		myChart.setOption(option);
-	}
-
-	function gotoResult() {
-		api.openWin({
-			name: 'connect',
-			url: './result.html',
-			pageParam: {
-				datas: finallyData
-			}
-		});
 	}
 </script>

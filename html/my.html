@@ -1,56 +1,139 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="utf-8">
-    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
-    <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
-    <link rel="stylesheet" type="text/css" href="../css/api.css"/>
-    <link rel="stylesheet" type="text/css" href="../css/style.css"/>
-    <link rel="stylesheet" type="text/css" href="../css/index.css" />
-		<title>我的</title>
-	</head>
-	<body style="background:url(../img/main_bg.jpg) no-repeat; background-size:100%;">
-		<div class="title">
-			<span class="btn_logo">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0" />
+	<meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+	<link rel="stylesheet" type="text/css" href="../css/api.css" />
+	<link rel="stylesheet" type="text/css" href="../css/style.css" />
+	<link rel="stylesheet" type="text/css" href="../css/index.css" />
+	<title>我的</title>
+</head>
+
+<body style="">
+	<div class="title">
+		<span class="btn_logo">
 				<img src="../img/left_arrow.png" />
-			</span>
-			我的
-		</div>
-		<div class="my-box">
-			<ul class="my-box-ul">
-				<li class="clearfix">
-					<img class="my-img" src="../img/my.png" />
-					<div class="my-con">
-						<p class="my-con-title">歼－２０光谱扫描</p>
-						<p class="my-grade clearfix"><span class="grade">老化等级</span><span class="grade-show show"></span><span class="grade-show"></span><span class="grade-show"></span></p>
-						<p class="my-info clearfix"><span class="info-img"></span><span class="info-wri">北京市</span><span class="info-wri info-wri2">2017-09-16</span></p>
-					</div>
-				</li>
-				<li class="clearfix">
-					<img class="my-img" src="../img/my.png" />
-					<div class="my-con">
-						<p class="my-con-title">歼－２０光谱扫描</p>
-						<p class="my-grade clearfix"><span class="grade">老化等级</span><span class="grade-show show"></span><span class="grade-show"></span><span class="grade-show"></span></p>
-						<p class="my-info clearfix"><span class="info-img"></span><span class="info-wri">北京市</span><span class="info-wri info-wri2">2017-09-16</span></p>
-					</div>
-				</li>
-			</ul>
-		</div>
-	</body>
+			</span> 我的任务
+	</div>
+	<div class="my-box">
+		<ul class="my-box-ul">
+			<li class="clearfix">
+				<img class="my-img" src="../img/my.png" />
+				<div class="my-con">
+					<p class="my-con-title">歼－２０光谱扫描</p>
+					<p class="my-grade clearfix"><span class="grade">老化等级</span><span class="grade-show show"></span><span class="grade-show"></span><span class="grade-show"></span></p>
+					<p class="my-info clearfix"><span class="info-img"></span><span class="info-wri">北京市</span><span class="info-wri info-wri2">2017-09-16</span></p>
+				</div>
+			</li>
+		</ul>
+	</div>
+</body>
+
 </html>
 <script type="text/javascript" src="../script/api.js"></script>
 <script type="text/javascript" src="../script/app.js"></script>
+<script type="text/javascript" src="../script/task.js"></script>
+<script type="text/javascript" src="../script/navi.js"></script>
 <script type="text/javascript" src="../script/device.js"></script>
 <script>
-		$api.addEvt($api.dom('.btn_logo'), 'click', function(){
-					api.historyBack({
-					},function(ret,err){
-							if(!ret.status){
-									api.closeWin();
+	$api.addEvt($api.dom('.btn_logo'), 'click', function() {
+		api.historyBack({}, function(ret, err) {
+			if (!ret.status) {
+				api.closeWin();
+			}
+		});
+	});
+	apiready = function() {
+
+		$api.remove($api.dom('.my-box-ul'));
+		$api.append($api.dom('.my-box'), '<ul class="my-box-ul"></ul>');
+		stTask.findTask(function(tasks) {
+			for (var i = 0; i < tasks.length; i++) {
+				var html = getTaskLi(tasks[i]);
+				$api.append($api.dom('.my-box-ul'), html);
+			}
+			var $lis = $api.domAll('.my-box-ul li');
+			for (var i = 0; i < $lis.length; i++) {
+				$api.addEvt($lis[i], 'click', function() {
+					var taskId = $api.attr(this, 'data-taskId');
+					stTask.getTask(taskId, true, function(ret) {
+						if (ret.status) {
+							var task = ret.task;
+							gotoTaskInfo(task);
+						} else {
+							api.alert({
+								title: '任务信息读取失败',
+								msg: ret.err.msg,
+							});
+						}
+					})
+				});
+			}
+			var $delImgs = $api.domAll('.my-box-ul li .delete_task');
+			for (var i = 0; i < $delImgs.length; i++) {
+				$api.addEvt($delImgs[i], 'click', function(e) {
+					e.stopPropagation();
+					var taskId = $api.attr(this, 'data-taskId');
+					api.confirm({
+					    title: '删除任务记录',
+					    msg: '确认要删除任务记录吗？',
+					    buttons: ['确定', '取消']
+					}, function(ret, err){
+							if(ret && ret.buttonIndex == 1){
+									var task = {};
+									task.id = taskId;
+									stTask.deleteTask(task, function(ret){
+											if (ret.status) {
+												window.location.reload();
+											} else {
+												 api.alert({
+												     title: '删除失败',
+												     msg: ret.err.msg,
+												 });
+											}
+									});
 							}
 					});
+				});
+			}
 		});
-		apiready = function(){
 
+		api.addEventListener({
+			name: 'keyback'
+		}, function(ret, err) {
+			gotoMain();
+		});
+	}
+
+	function getTaskLi(t) {
+		var img;
+		var date = stTask.dateFormat('yyyy-MM-dd', new Date(t.timestamp));
+		var imagePath = "../img/noimage.jpg";
+		if (t.imagePath) {
+			imagePath = t.imagePath;
 		}
+		var city = "未知";
+		if (t.position && t.position.city) {
+			city = t.position.city
+		}
+		var html = '<li class="clearfix" data-taskId="' + t.id + '">' +
+			'<img class="my-img" src="' + imagePath + '" data-taskId="' + t.id + '"/>' +
+			'<div class="my-con">' +
+			'<p class="my-con-title">' + t.name + '</p>' + '<img class="delete_task" src="../img/del.png" data-taskId="' + t.id + '"/>'
+			'<p class="my-grade clearfix"><span class="grade">老化等级</span>';
+		for (var i = 0; i < 3; i++) {
+			if (i <= (parseInt(t.result.level) - 1)) {
+				html += '<span class="grade-show show"></span>';
+			} else {
+				html += '<span class="grade-show"></span>';
+			}
+		}
+		html += '</p>' +
+			'<p class="my-info clearfix"><span class="info-img"></span><span class="info-wri">' + city + '</span><span class="info-wri info-wri2">' + date + '</span></p>' +
+			'</div>' +
+			'</li>';
+		return html;
+	}
 </script>

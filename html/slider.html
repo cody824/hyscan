@@ -16,7 +16,7 @@
     <div class="sidebar">
         <div class="s_left">
             <div class="head">
-                <img src="../img/head.png" class="h_img"/> <span id="gotoLogin" data-status="logout">点击登录</span>
+                <img src="../img/default_avatar_male_180.gif" class="h_img"/> <span id="gotoLogin" data-status="logout">点击登录</span>
             </div>
             <ul class="nav">
                 <li>
@@ -36,6 +36,7 @@
 </html>
 <script type="text/javascript" src="../script/api.js"></script>
 <script type="text/javascript" src="../script/app.js"></script>
+<script type="text/javascript" src="../script/navi.js"></script>
 <script>
     $api.addEvt($api.dom('#setup'), 'click', function() {
         api.openWin({
@@ -46,16 +47,29 @@
     });
 
     $api.addEvt($api.dom('#deviceInfo'), 'click', function() {
-        api.openWin({
-            name: 'equipment',
-            url: './equipment.html'
-        });
+        if (appConfig.device) {
+            api.openWin({
+                name: 'equipment',
+                url: './equipment.html'
+            });
+        } else {
+            api.confirm({
+                title: '没有绑定设备',
+                msg: '没有绑定设备，是否现在绑定？',
+                buttons: ['绑定', '取消']
+            }, function(ret, err){
+                if (ret.buttonIndex == 1) {
+                    gotoScanDevice();
+                }
+            });
+
+        }
     });
 
     $api.addEvt($api.dom('#about'), 'click', function() {
         api.alert({
             title: 'HyScan',
-            msg: '光谱分析仪V1.0',
+            msg: 'V' + api.appVersion,
         }, function(ret, err) {
 
         });
@@ -80,15 +94,40 @@
                 });
             }
         });
-
       }
     });
 
     apiready = function() {
           if (!isLoad) loadAppConfig();
           if (appConfig.isLogin){
-              $api.text($api.dom('#gotoLogin'), appConfig.loginName);
-              $api.attr($api.dom('#gotoLogin'), "data-status", "login");
+              getUserDetails(appConfig.token, function(ud, err){
+                  if (ud) {
+                      appConfig.isLogin = true;
+                      appConfig.loginName = ud.fullName;
+                      appConfig.user = ud;
+                      saveAppConfig();
+                      var headImg = null;
+                      if (ud.avatar) {
+                          headImg = ud.avatar;
+                      } else if (ud.avatarHd) {
+                           headImg = ud.avatarHd;
+                      }
+                      if (headImg)
+                          $api.attr($api.dom('.h_img'), 'src', headImg);
+                      $api.text($api.dom('#gotoLogin'), appConfig.loginName);
+                      $api.attr($api.dom('#gotoLogin'), "data-status", "login");
+                  }  else {
+                      if (err.statusCode == 401) {
+                          logout(function(){
+                              api.toast({
+                                  msg: '登录过期，需要重新登录',
+                                  duration: 2000,
+                                  location: 'top'
+                              });
+                          })
+                      }
+                  }
+              })
           } else {
               $api.attr($api.dom('#gotoLogin'), "data-status", "logout");
               $api.text($api.dom('#gotoLogin'), "点击登录");
