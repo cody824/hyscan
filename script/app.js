@@ -21,8 +21,8 @@
     }
 
     window.initModelConfig = function(fetch){
-        var __appConfig = $api.getStorage('appConfig');
-        if (__appConfig.globalConfig.serverIp && isDev)
+        var __appConfig = $api.getStorage('appConfig') ||　｛globalConfig : {}｝
+        if (__appConfig.globalConfig && __appConfig.globalConfig.serverIp && isDev)
             globalConfig.serverUrl = "http://" + __appConfig.globalConfig.serverIp + ":9090/"
 
         if (fetch) {
