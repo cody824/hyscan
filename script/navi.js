@@ -23,7 +23,6 @@
 
     window.gotoMap = function(){
       api.openWin({
-
           name: 'map',
           url: 'map.html'
       });
