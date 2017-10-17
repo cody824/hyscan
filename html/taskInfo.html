@@ -40,8 +40,8 @@
         <div class="pie" id="pie">
             <!-- <img src="../img/img_pie.png" style="opacity:0" /> -->
             <div class="r_txt">
-                <span class="p1" id="levelText">二级老化</span>
-                <p class="p2" id="material">金属材质</p>
+                <span class="p1" id="levelText">正在检测</span>
+                <p class="p2" id="material">……</p>
             </div>
         </div>
         <div class="task_img"><img src=""></div>
@@ -80,6 +80,7 @@
     var task; //当前任务
     var backWin = "my";
     var imgView;
+    var imgShow = false;
 
     var properties = $api.domAll('.data_type li');
     var arcProgress;
@@ -100,6 +101,40 @@
     $api.addEvt($api.dom('.task_img img'), 'click', function(){
         if (this.src.length > 0)
             showImg(this.src, task.name);
+    });
+
+    $api.addEvt($api.dom('.r_txt'), 'click', function(){
+        if (task.result && task.result.level == 0) {
+            api.confirm({
+                title: '要重新检测数据吗？',
+                msg: '请确保网络连接畅通',
+                buttons: ['确定', '取消']
+            }, function(ret, err){
+                if (ret.buttonIndex == 1){
+                    var progress = 0
+            		var checkInter = setInterval(function () {
+            			if (progress == 100) progress = 0;
+            			arcProgress.setValue({
+            				id: pieId,
+            				value: progress++
+            			});
+            		}, 10);
+                    stTask.getTask(task.id, true, function(ret){
+                        if (ret.status) {
+                            var saveTask = deepCopy(ret.task);
+                            var reflectivity = DPTool.getReflectivity(saveTask.data, saveTask.dc[0], saveTask.dc[1])
+                            stTask.getTestResult(reflectivity, function(result) {
+                                clearInterval(checkInter);
+                                setTestResult(result);
+                                saveTask.result = result;
+                                stTask.updateTaskInfo(saveTask);
+                            });
+                        }
+                    });
+                }
+            });
+
+        }
     });
 
 
@@ -210,10 +245,15 @@
         api.addEventListener({
             name: 'keyback'
         }, function(ret, err) {
-            if (backWin == "map") {
-                gotoMap();
+            if (imgShow) {
+                imgShow = false;
+                imgView.close();
             } else {
-                gotoMe();
+                if (backWin == "map") {
+                    gotoMap();
+                } else {
+                    gotoMe();
+                }
             }
         });
         api.addEventListener({
@@ -357,7 +397,7 @@
     }
 
     function setTestResult(result) {
-        var oldLevelText = "";
+        var oldLevelText = "点击重新检测";
         var color = "#00F9FF";
         if (result.level == 1) {
             oldLevelText = "一级老化";
@@ -396,26 +436,18 @@
     }
 
     function showImg(imagePath, name){
-        // arcProgress.close({
-        //     id:pieId
-        // });
-
         imgView.open({
             images: [
                 imagePath
             ],
-            // placeholderImg: 'widget://res/img/apicloud.png',
             bgColor: '#000'
         }, function(ret, err) {
             if (ret.eventType == "click"){
+                imgShow = false;
                 imgView.close();
+            } else if (ret.eventType == "show"){
+                imgShow = true;
             }
-            //
-            // if (ret) {
-            //     alert(JSON.stringify(ret));
-            // } else {
-            //     alert(JSON.stringify(err));
-            // }
         });
     }
 
