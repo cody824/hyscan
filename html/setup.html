@@ -60,121 +60,107 @@
 
 	var cn = appConfig.globalConfig.collectNum || 1;
 	var serverIp = appConfig.globalConfig.serverIp || "";
+	var devicePeriod = 100;
 
 	$api.text($api.dom('#collectNum'), cn);
 	$api.text($api.dom('#serverIp'), serverIp);
 	if (appConfig.device) {
-			$api.text($api.dom('#bindStatus'), "已绑定");
-			$api.text($api.dom('#unbunding'), "解绑");
+		devicePeriod = appConfig.device.period ? appConfig.device.period : devicePeriod;
+		$api.text($api.dom('#bindStatus'), "已绑定");
+		$api.text($api.dom('#unbunding'), "解绑");
 	} else {
-			$api.text($api.dom('#bindStatus'), "未绑定");
-			$api.text($api.dom('#unbunding'), "绑定设备");
+		$api.text($api.dom('#bindStatus'), "未绑定");
+		$api.text($api.dom('#unbunding'), "绑定设备");
 	}
 	if (isDev) {
 		$api.css($api.dom("#serverIpSetupLi"), 'display:block;');
 	}
-
+	$api.text($api.dom('#period'), devicePeriod);
 
 
 	apiready = function() {
 		dialogBox = api.require('dialogBox');
 		inputField = api.require('inputField');
-		sppUtil.init(function(){
-				stDevice.isDeviceOk(function(ret){
-						if(ret.status >= 0) {
-							   hyCmd.receive(appConfig.device.address)
-						}
-				})
-		});
 		api.addEventListener({
-				name:'keyback'
-		}, function(ret, err){
-			if (appConfig.device)
-			 	sppUtil.disconnectDevice(appConfig.device.address);
-			 api.historyBack({
-			 },function(ret,err){
-					 if(!ret.status){
-							 api.closeWin();
-					 }
-			 });
+			name: 'keyback'
+		}, function(ret, err) {
+			api.historyBack({}, function(ret, err) {
+				if (!ret.status) {
+					api.closeWin();
+				}
+			});
 		});
 	}
 
-	$api.addEvt($api.dom('.btn_logo'), 'click', function(){
-			if (appConfig.device)
-		   		sppUtil.disconnectDevice(appConfig.device.address);
-				api.historyBack({
-				},function(ret,err){
-				    if(!ret.status){
-				        api.closeWin();
-				    }
-				});
+	$api.addEvt($api.dom('.btn_logo'), 'click', function() {
+		api.historyBack({}, function(ret, err) {
+			if (!ret.status) {
+				api.closeWin();
+			}
+		});
 	});
 
-	$api.addEvt($api.dom('#paramSetupLi'), 'click', function(){
-				sppUtil.disconnectDevice(appConfig.device.address);
-				gotoRevise();
+	$api.addEvt($api.dom('#paramSetupLi'), 'click', function() {
+		gotoRevise();
 	});
 
-	$api.addEvt($api.dom('#unbunding'), 'click', function(){
+	$api.addEvt($api.dom('#unbunding'), 'click', function() {
 		if (!appConfig.device) {
-				gotoScanDevice();
-				return;
+			gotoScanDevice();
+			return;
 		}
 
 		dialogBox.confirm({
-				tapClose: false,
+			tapClose: false,
+			msg: {
+				content: '确认要解绑设备吗',
+				leftBtnTitle: '取消',
+				rightBtnTitle: '确定'
+			},
+			styles: {
+				bg: '#fff',
+				maskBg: 'rgba(0,0,0,0.5)',
+				h: 200,
 				msg: {
-						content:'确认要解绑设备吗',
-						leftBtnTitle: '取消',
-						rightBtnTitle:'确定'
+					color: '#00DEFF',
+					size: 20,
+					maginLR: 100,
+					maginT: 50
 				},
-				styles: {
-			 bg: '#fff',
-			 maskBg:'rgba(0,0,0,0.5)',
-			 h: 200,
-			 msg :{
-					 color : '#00DEFF',
-					 size  : 20,
-					 maginLR: 100 ,
-					 maginT: 50
-			 },
-			 leftBtn :{
-					 borderColor: 'rgba(0,0,0,0)',
-					 color: '#007FFF',
-					 size: 14
-			 },
-			 rightBtn :{
-					 bg: 'rgba(0,0,0,0)',
-					 selectedBg:'#F00',
-					 color: '#007FFF',
-					 size: 14
-			 }
-	 }
-			}, function(ret) {
-					dialogBox.close({
-					    dialogName: 'confirm'
-					});
-					if (ret.eventType == "ok") {
-							sppUtil.disconnectDevice(appConfig.device.address, function(){
-									appConfig.device = null;
-									saveAppConfig();
-									gotoMain();
-							})
-					}
+				leftBtn: {
+					borderColor: 'rgba(0,0,0,0)',
+					color: '#007FFF',
+					size: 14
+				},
+				rightBtn: {
+					bg: 'rgba(0,0,0,0)',
+					selectedBg: '#F00',
+					color: '#007FFF',
+					size: 14
+				}
+			}
+		}, function(ret) {
+			dialogBox.close({
+				dialogName: 'confirm'
+			});
+			if (ret.eventType == "ok") {
+				appConfig.device = null;
+				saveAppConfig();
+				gotoMain();
+			}
 		});
 	});
-	$api.addEvt($api.dom('#periodLi'), 'click', function(){
-			var num = $api.text($api.dom('#period'));
-			setupPeriod(num);
+	$api.addEvt($api.dom('#periodLi'), 'click', function() {
+		var num = $api.text($api.dom('#period'));
+		setupPeriod(num);
 	});
-	$api.addEvt($api.dom('#collectNumLi'), 'click', function(){
-			var num = $api.text($api.dom('#collectNum'));
-			setupCollectNum(num);
+	$api.addEvt($api.dom('#collectNumLi'), 'click', function() {
+		var num = $api.text($api.dom('#collectNum'));
+		setupCollectNum(num);
 	});
-	$api.addEvt($api.dom('#serverIpSetupLi'), 'click', function(){
-			var serverIp = $api.text($api.dom('#serverIp'));
-			setupServerIp(serverIp);
+	$api.addEvt($api.dom('#serverIpSetupLi'), 'click', function() {
+		var serverIp = $api.text($api.dom('#serverIp'));
+		setupServerIp(serverIp);
 	});
 
 	function setupCollectNum(current) {
@@ -182,12 +168,12 @@
 			keyboardType: 'number',
 			texts: {
 				title: '平均采集次数',
-				default : current,
+				default: current,
 				placeholder: '请输入0-10的数字',
 				leftBtnTitle: '取消',
 				rightBtnTitle: '确定'
 			},
-			styles: dialogStyles ,
+			styles: dialogStyles,
 			tapClose: true
 		}, function(ret) {
 			console.log(JSON.stringify(ret));
@@ -198,18 +184,18 @@
 			if (ret.eventType == 'left') {
 				// doSaveLocal(ret.text);
 			} else if (ret.eventType == 'right') {
-				 var collectNum = parseInt(ret.text);
-				 if (collectNum < 1 || collectNum > 10) {
-					 		api.alert({
-					 		    title: '输入错误',
-					 		    msg: '只能输入1-10之间的数',
-					 		});
-							return;
-				 }
+				var collectNum = parseInt(ret.text);
+				if (collectNum < 1 || collectNum > 10) {
+					api.alert({
+						title: '输入错误',
+						msg: '只能输入1-10之间的数',
+					});
+					return;
+				}
 				// doSaveRemote(ret.text);
-				 appConfig.globalConfig.collectNum = collectNum;
-				 saveAppConfig();
-				 $api.text($api.dom('#collectNum'), ret.text);
+				appConfig.globalConfig.collectNum = collectNum;
+				saveAppConfig();
+				$api.text($api.dom('#collectNum'), ret.text);
 			}
 		});
 	}
@@ -219,12 +205,12 @@
 			keyboardType: 'number',
 			texts: {
 				title: '积分时间（ms）',
-				default : current,
+				default: current,
 				placeholder: '单位毫秒',
 				leftBtnTitle: '取消',
 				rightBtnTitle: '确定'
 			},
-			styles: dialogStyles ,
+			styles: dialogStyles,
 			tapClose: true
 		}, function(ret) {
 			dialogBox.close({
@@ -235,15 +221,18 @@
 				// doSaveLocal(ret.text);
 			} else if (ret.eventType == 'right') {
 				var period = parseInt(ret.text);
-				if (period > 255 || period < 1){
-						api.alert({
-								title: '输入错误',
-								msg: '只能输入1-255之间的数',
-						});
-						return;
+				if (period > 255 || period < 1) {
+					api.alert({
+						title: '输入错误',
+						msg: '只能输入1-255之间的数',
+					});
+					return;
 				}
-				 hyCmd.periodSetup(appConfig.device.address, period);
-				 $api.text($api.dom('#period'), ret.text);
+				if (appConfig.device) {
+					appConfig.device.period = period;
+					saveAppConfig();
+				}
+				$api.text($api.dom('#period'), ret.text);
 			}
 		});
 	}
@@ -253,61 +242,58 @@
 			keyboardType: 'forbid',
 			texts: {
 				title: '服务器IP',
-				default : current,
+				default: current,
 				placeholder: '请输入服务器IP',
 				leftBtnTitle: '取消',
 				rightBtnTitle: '确定'
 			},
-			styles: dialogStyles ,
+			styles: dialogStyles,
 			tapClose: true
 		}, function(ret) {
 			dialogBox.close({
 				dialogName: 'input'
 			});
 
-			if (ret.eventType == 'left') {
-				// doSaveLocal(ret.text);
-			} else if (ret.eventType == 'right') {
-				 var serverIp = ret.text;
-				 appConfig.globalConfig.serverIp = serverIp;
-				 saveAppConfig();
-				 loadAppConfig();
-				 $api.text($api.dom('#serverIp'), ret.text);
+			if (ret.eventType == 'right') {
+				var serverIp = ret.text;
+				appConfig.globalConfig.serverIp = serverIp;
+				saveAppConfig();
+				loadAppConfig();
+				$api.text($api.dom('#serverIp'), ret.text);
 			}
 		});
 	}
 
-var dialogStyles = {
-	bg: '#fff',
-	corner: 10,
-	w: 300,
-	h: 140,
-	title: {
-		h: 60,
-		alignment: 'center',
-		size: 16,
-		color: '#00DEFF'
-	},
-	input: {
-		h: 60,
-		marginT: 6,
-		textSize: 14,
-		textColor: '#000'
-	},
-	dividingLine: {
-		width: 0,
-		color: '#696969'
-	},
-	left: {
-		bg: 'rgba(0,0,0,0)',
-		color: '#00DEFF',
-		size: 12
-	},
-	right: {
-		bg: 'rgba(0,0,0,0)',
-		color: '#00DEFF',
-		size: 12
-	},
-};
-
+	var dialogStyles = {
+		bg: '#fff',
+		corner: 10,
+		w: 300,
+		h: 140,
+		title: {
+			h: 60,
+			alignment: 'center',
+			size: 16,
+			color: '#00DEFF'
+		},
+		input: {
+			h: 60,
+			marginT: 6,
+			textSize: 14,
+			textColor: '#000'
+		},
+		dividingLine: {
+			width: 0,
+			color: '#696969'
+		},
+		left: {
+			bg: 'rgba(0,0,0,0)',
+			color: '#00DEFF',
+			size: 12
+		},
+		right: {
+			bg: 'rgba(0,0,0,0)',
+			color: '#00DEFF',
+			size: 12
+		},
+	};
 </script>

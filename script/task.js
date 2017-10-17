@@ -272,8 +272,7 @@
         findTask: function(callback, start, limit) {
             stTask.init();
             start = start || 0;
-
-            limit = limit || 0;
+            limit = limit || 500;
             var files = $api.getStorage('taskList');
             if (files && files.length > 0 && start <= files.length - 1) {
                 var tasks = [];
@@ -283,12 +282,7 @@
                 }
                 var endIndex = beginIndex - limit + 1;
                 endIndex = endIndex < 0 ? 0 : endIndex;
-                console.log(JSON.stringify(files));
                 var  fileNum = beginIndex - endIndex + 1;
-                console.log(beginIndex);
-                console.log(endIndex);
-                console.log(files.length);
-                console.log(fileNum);
                 for (var i = beginIndex; i >= endIndex; i--) {
                     var path = files[i];
                     stTask.getTask(path, false, function(ret) {

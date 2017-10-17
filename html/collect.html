@@ -11,7 +11,7 @@
 	<link rel="stylesheet" type="text/css" href="../css/index.css" />
 </head>
 
-<body  style="position: relative; background:url(../img/main_bg.jpg) no-repeat; background-size:100% 100%; background-attachment: fixed;">
+<body style="position: relative; background:url(../img/main_bg.jpg) no-repeat; background-size:100% 100%; background-attachment: fixed;">
 	<div class="cj_title">
 		<img src="../img/jg_banner.png" />
 		<div class="data">
@@ -56,18 +56,28 @@
 
 	apiready = function() {
 		api.addEventListener({
-				name: 'keyback'
+			name: 'keyback'
 		}, function(ret, err) {
-				if (!canBack) {
-					api.toast({
-					    msg: '光谱采集中，不能返回',
-					    duration: 2000,
-					    location: 'bottom'
-					});
-				} else {
-					gotoMain();
-				}
+			if (!canBack) {
+				api.toast({
+					msg: '光谱采集中，不能返回',
+					duration: 2000,
+					location: 'bottom'
+				});
+			} else {
+				gotoMain();
+			}
 		});
+
+		api.addEventListener({
+		    name: 'viewdisappear'
+		}, function(ret, err){
+			setTimeout(function(){
+				console.log("采集完毕，断开连接");
+				sppUtil.disconnectDevice(appConfig.device.address, function(ret) {});
+			}, 3000)
+		});
+
 		spp = api.require("spp");
 		$api.attr($api.dom('.chart'), 'width', api.winWidth);
 		sppUtil.init(function() {
@@ -90,9 +100,7 @@
 					},
 					stopCollect: function() {
 						collecting = false;
-						canBack = true;
 						console.log("停止采集成功");
-						sppUtil.disconnectDevice(appConfig.device.address, function(ret) {});
 						api.hideProgress();
 						var finallyData = DPTool.getFinallyData();
 						if (finallyData) {
@@ -107,6 +115,9 @@
 						}
 					}
 				});
+				var period = appConfig.device.period || 100;
+				console.log("设置积分时间：" + period);
+				hyCmd.periodSetup(appConfig.device.address, period);
 				console.log("发送连续采集命令");
 				hyCmd.collect(appConfig.device.address, function(ret) {
 					if (!ret.status) {
@@ -155,16 +166,29 @@
 	}
 
 	$api.addEvt($api.dom('.c_btn img'), 'click', function() {
-		console.log("发送停止采集命令");
 		api.showProgress({
 			title: '采集停止中',
 			text: '请耐心等待',
-			modal: false
+			modal: true
 		});
+		console.log("发送停止采集命令");
 		hyCmd.stopCollect(appConfig.device.address, function(ret) {
 			progressType == "stopCollect"
-			//canBack = true;
+			canBack = true;
 		});
+		var stopI = setInterval(function() {
+			if (collecting) {
+				console.log("重新发送停止采集命令");
+				hyCmd.stopCollect(appConfig.device.address, function(ret) {
+					progressType == "stopCollect"
+					canBack = true;
+				});
+			} else {
+				console.log("已经停止");
+				clearInterval(stopI);
+			}
+		}, 3000);
+
 	});
 
 	function initChat(datas, labels) {

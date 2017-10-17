@@ -62,19 +62,32 @@
 				if (ret.status >= 0) {
 					stDevice.readDeviceInfo(appConfig.device.address, function() {
 						updateInfo();
-						sppUtil.disconnectDevice(appConfig.device.address);
 					})
 				}
 			})
+		});
+
+		api.addEventListener({
+		    name: 'viewdisappear'
+		}, function(ret, err){
+		    if (appConfig.device) {
+				setTimeout(function(){
+					sppUtil.disconnectDevice(appConfig.device.address);
+				}, 3000);
+			}
 		});
 	}
 
 	function updateInfo() {
 		if (appConfig.device) {
-			$api.text($api.dom('.eq-number'), appConfig.device.model);
-			$api.text($api.dom('.serialNum'), appConfig.device.serial);
-			$api.text($api.dom('.firmware'), appConfig.device.firmware);
-			$api.text($api.dom('.batteryInfo'), appConfig.device.batteryInfo + "%");
+			if (appConfig.device.model)
+				$api.text($api.dom('.eq-number'), appConfig.device.model);
+			if (appConfig.device.serial)
+				$api.text($api.dom('.serialNum'), appConfig.device.serial);
+			if (appConfig.device.firmware)
+				$api.text($api.dom('.firmware'), appConfig.device.firmware);
+			if (appConfig.device.batteryInfo)
+				$api.text($api.dom('.batteryInfo'), appConfig.device.batteryInfo + "%");
 		}
 	}
 </script>
