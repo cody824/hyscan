@@ -1,47 +1,49 @@
 <!doctype html>
 <html>
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0" />
     <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
     <title>主页面</title>
 </head>
+
 <body>
 </body>
+
 </html>
 <script type="text/javascript" src="script/api.js"></script>
 <script type="text/javascript" src="script/app.js"></script>
 <script type="text/javascript">
-    apiready = function () {
-      initModelConfig(true);
-      api.addEventListener({
-          name:'resume'
-      }, function(ret, err){
-          console.log('应用回到前台');
-      });
-      api.addEventListener({
-          name:'pause'
-      }, function(ret, err){
-          console.log('应用进入后台');
-      });
-      api.addEventListener({
-          name:'viewappear'
-      }, function(ret, err){
-        api.openDrawerLayout({
-            name :'main',
-            url: 'html/main.html',
-            animation : {
-                type:"fade",                //动画类型（详见动画类型常量）
-                subType:"from_left",       //动画子类型（详见动画子类型常量）
-                duration:300                //动画过渡时间，默认300毫秒
-            },
-            leftPane: {
-                edge: api.winWidth * 0.4,
-                name: 'slider',
-                url: 'html/slider.html'
-            }
+    apiready = function() {
+        initModelConfig(true);
+        api.addEventListener({
+            name: 'resume'
+        }, function(ret, err) {
+            console.log('应用回到前台');
         });
-      });
+        api.addEventListener({
+            name: 'pause'
+        }, function(ret, err) {
+            console.log('应用进入后台');
+        });
+        api.addEventListener({
+            name: 'viewappear'
+        }, function(ret, err) {
+            api.openDrawerLayout({
+                name: 'main',
+                url: 'html/main.html',
+                animation: {
+                    type: "fade", //动画类型（详见动画类型常量）
+                    subType: "from_left", //动画子类型（详见动画子类型常量）
+                    duration: 300 //动画过渡时间，默认300毫秒
+                },
+                leftPane: {
+                    edge: api.winWidth * 0.4,
+                    name: 'slider',
+                    url: 'html/slider.html'
+                }
+            });
+        });
     }
-
 </script>

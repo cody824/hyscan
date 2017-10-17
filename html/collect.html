@@ -11,7 +11,7 @@
 	<link rel="stylesheet" type="text/css" href="../css/index.css" />
 </head>
 
-<body>
+<body  style="position: relative; background:url(../img/main_bg.jpg) no-repeat; background-size:100% 100%; background-attachment: fixed;">
 	<div class="cj_title">
 		<img src="../img/jg_banner.png" />
 		<div class="data">
@@ -32,7 +32,7 @@
 		</div>
 		<p class="d_txt">正在检测DN值</p>
 	</div>
-	<div id="chart" class="chart" style="height:200px;">
+	<div id="chart" class="chart">
 	</div>
 	<div class="c_btn">
 		<img src="../img/icon_collection_default.png" />
@@ -90,6 +90,7 @@
 					},
 					stopCollect: function() {
 						collecting = false;
+						canBack = true;
 						console.log("停止采集成功");
 						sppUtil.disconnectDevice(appConfig.device.address, function(ret) {});
 						api.hideProgress();
@@ -160,18 +161,10 @@
 			text: '请耐心等待',
 			modal: false
 		});
-
-		var stopI = setInterval(function () {
-			if (collecting) {
-				hyCmd.stopCollect(appConfig.device.address, function(ret) {
-					progressType == "stopCollect"
-					//collecting = false;
-					canBack = true;
-				});
-			} else {
-				clearInterval(stopI);
-			}
-		}, 1000);
+		hyCmd.stopCollect(appConfig.device.address, function(ret) {
+			progressType == "stopCollect"
+			//canBack = true;
+		});
 	});
 
 	function initChat(datas, labels) {

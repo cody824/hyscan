@@ -10,10 +10,7 @@
 
         addTask: function(data, result, position, name, imagePath, device, callback) {
             var now = new Date();
-            var seq = parseInt($api.getStorage('taskSeq') || 0);
-            if (seq > 999) seq = 0;
-            var id = device.model + device.serial + dateFormat("yyyyMMddhhmm", now) + (1000 + seq);
-            $api.setStorage('taskSeq', ++seq);
+            var id = device.model + device.serial + dateFormat("yyyyMMddhhmmssS", now);
             var dc = [];
             dc[0] = device.darkCurrent;
             dc[1] = device.whiteboardData;
@@ -272,13 +269,27 @@
             });
         },
 
-        findTask: function(callback) {
+        findTask: function(callback, start, limit) {
             stTask.init();
+            start = start || 0;
+
+            limit = limit || 0;
             var files = $api.getStorage('taskList');
-            if (files && files.length > 0) {
-                var fileNum = files.length;
+            if (files && files.length > 0 && start <= files.length - 1) {
                 var tasks = [];
-                for (var i = files.length - 1; i >= 0; i--) {
+                var beginIndex = files.length - 1 - start;
+                if (beginIndex < 0) {
+                    callback([]);
+                }
+                var endIndex = beginIndex - limit + 1;
+                endIndex = endIndex < 0 ? 0 : endIndex;
+                console.log(JSON.stringify(files));
+                var  fileNum = beginIndex - endIndex + 1;
+                console.log(beginIndex);
+                console.log(endIndex);
+                console.log(files.length);
+                console.log(fileNum);
+                for (var i = beginIndex; i >= endIndex; i--) {
                     var path = files[i];
                     stTask.getTask(path, false, function(ret) {
                         fileNum--;
@@ -290,6 +301,8 @@
                         }
                     });
                 }
+            } else {
+                callback([]);
             }
         },
 

@@ -17,18 +17,6 @@
 				<img src="../img/left_arrow.png" />
 			</span> 我的任务
 	</div>
-	<div class="my-box">
-		<ul class="my-box-ul">
-			<li class="clearfix">
-				<img class="my-img" src="../img/my.png" />
-				<div class="my-con">
-					<p class="my-con-title">歼－２０光谱扫描</p>
-					<p class="my-grade clearfix"><span class="grade">老化等级</span><span class="grade-show show"></span><span class="grade-show"></span><span class="grade-show"></span></p>
-					<p class="my-info clearfix"><span class="info-img"></span><span class="info-wri">北京市</span><span class="info-wri info-wri2">2017-09-16</span></p>
-				</div>
-			</li>
-		</ul>
-	</div>
 </body>
 
 </html>
@@ -38,6 +26,9 @@
 <script type="text/javascript" src="../script/navi.js"></script>
 <script type="text/javascript" src="../script/device.js"></script>
 <script>
+	var UIListView;
+	var start = 0;
+	var limit = 10;
 	$api.addEvt($api.dom('.btn_logo'), 'click', function() {
 		api.historyBack({}, function(ret, err) {
 			if (!ret.status) {
@@ -46,19 +37,83 @@
 		});
 	});
 	apiready = function() {
+		UIListView = api.require('UIListView');
+		var y = $api.cssVal($api.dom('.title'), 'height');
+		y = y.substring(0, y.indexOf('px'));
+		UIListView.open({
+			rect: {
+				x: 0,
+				y: y
+			},
+			data: [],
+			rightBtns: [{
+				bgColor: '#CE0000',
+				activeBgColor: '',
+				width: 70,
+				title: '删除',
+				titleSize: 12,
+				titleColor: '#fff',
+				icon: '',
+				iconWidth: 20
+			}],
+			styles: {
+				borderColor: '#BEBEBE',
+				item: {
+					bgColor: '#FCFCFC',
+					activeBgColor: '#6C6C6C',
+					height: 80,
+					imgWidth: 70,
+					imgHeight: 70,
+					imgCorner: 50,
+					placeholderImg: 'widget://img/noimage.jpg',
+					titleSize: 16.0,
+					titleColor: '#333333',
+					subTitleSize: 12.0,
+					subTitleColor: '#999999',
+					remarkColor: '#666666',
+					remarkSize: 14,
+					remarkIconWidth: 30
+				}
+			},
+			bounces: true,
+			//fixedOn: api.frameName
+		}, function(ret, err) {
+			if (ret.eventType == "clickRightBtn") {
+				var index = ret.index;
+				UIListView.getDataByIndex({
+					index: index
+				}, function(ret) {
+					var data = ret.data;
+					api.confirm({
+						title: '删除任务记录',
+						msg: '确认要删除任务记录吗？',
+						buttons: ['确定', '取消']
+					}, function(ret, err) {
+						if (ret && ret.buttonIndex == 1) {
+							var task = {};
+							task.id = data.uid;
+							stTask.deleteTask(task, function(ret) {
+								if (ret.status) {
+									start = 0;
+									doReload(UIListView.reloadData);
+								} else {
+									api.alert({
+										title: '删除失败',
+										msg: ret.err.msg,
+									});
+								}
+							});
+						}
+					});
+				});
 
-		$api.remove($api.dom('.my-box-ul'));
-		$api.append($api.dom('.my-box'), '<ul class="my-box-ul"></ul>');
-		stTask.findTask(function(tasks) {
-			for (var i = 0; i < tasks.length; i++) {
-				var html = getTaskLi(tasks[i]);
-				$api.append($api.dom('.my-box-ul'), html);
-			}
-			var $lis = $api.domAll('.my-box-ul li');
-			for (var i = 0; i < $lis.length; i++) {
-				$api.addEvt($lis[i], 'click', function() {
-					var taskId = $api.attr(this, 'data-taskId');
-					stTask.getTask(taskId, true, function(ret) {
+			} else if (ret.eventType == "clickContent" || ret.eventType == "clickRemark") {
+				var index = ret.index;
+				UIListView.getDataByIndex({
+					index: index
+				}, function(ret) {
+					var data = ret.data;
+					stTask.getTask(data.uid, true, function(ret) {
 						if (ret.status) {
 							var task = ret.task;
 							gotoTaskInfo(task);
@@ -70,36 +125,34 @@
 						}
 					})
 				});
-			}
-			var $delImgs = $api.domAll('.my-box-ul li .delete_task');
-			for (var i = 0; i < $delImgs.length; i++) {
-				$api.addEvt($delImgs[i], 'click', function(e) {
-					e.stopPropagation();
-					var taskId = $api.attr(this, 'data-taskId');
-					api.confirm({
-					    title: '删除任务记录',
-					    msg: '确认要删除任务记录吗？',
-					    buttons: ['确定', '取消']
-					}, function(ret, err){
-							if(ret && ret.buttonIndex == 1){
-									var task = {};
-									task.id = taskId;
-									stTask.deleteTask(task, function(ret){
-											if (ret.status) {
-												window.location.reload();
-											} else {
-												 api.alert({
-												     title: '删除失败',
-												     msg: ret.err.msg,
-												 });
-											}
-									});
-							}
-					});
-				});
+			} else {
+
 			}
 		});
 
+		UIListView.setRefreshHeader({
+			loadingImg: 'widget://image/loading_more.gif',
+			bgColor: '#F5F5F5',
+			textColor: '#8E8E8E',
+			textDown: '下拉可以刷新...',
+			textUp: '松开开始刷新...',
+			showTime: true
+		}, function(ret, err) {
+			start = 0;
+			doReload(UIListView.reloadData);
+		});
+		UIListView.setRefreshFooter({
+			loadingImg: 'widget://image/loading_more.gif',
+			bgColor: '#F5F5F5',
+			textColor: '#8E8E8E',
+			textUp: '上拉加载更多...',
+			textDown: '松开开始加载...',
+			showTime: true
+		}, function(ret, err) {
+			doReload(UIListView.appendData);
+		});
+
+		doReload(UIListView.reloadData);
 		api.addEventListener({
 			name: 'keyback'
 		}, function(ret, err) {
@@ -107,33 +160,36 @@
 		});
 	}
 
-	function getTaskLi(t) {
-		var img;
-		var date = stTask.dateFormat('yyyy-MM-dd', new Date(t.timestamp));
-		var imagePath = "../img/noimage.jpg";
-		if (t.imagePath) {
-			imagePath = t.imagePath;
-		}
-		var city = "未知";
-		if (t.position && t.position.city) {
-			city = t.position.city
-		}
-		var html = '<li class="clearfix" data-taskId="' + t.id + '">' +
-			'<img class="my-img" src="' + imagePath + '" data-taskId="' + t.id + '"/>' +
-			'<div class="my-con">' +
-			'<p class="my-con-title">' + t.name + '</p>' + '<img class="delete_task" src="../img/del.png" data-taskId="' + t.id + '"/>'
-			'<p class="my-grade clearfix"><span class="grade">老化等级</span>';
-		for (var i = 0; i < 3; i++) {
-			if (i <= (parseInt(t.result.level) - 1)) {
-				html += '<span class="grade-show show"></span>';
-			} else {
-				html += '<span class="grade-show"></span>';
+	function doReload(callback){
+		stTask.findTask(function(tasks) {
+			var datas = [];
+			for (var i = 0; i < tasks.length; i++) {
+				var task = tasks[i];
+				var data = {};
+
+				var date = stTask.dateFormat('yyyy-MM-dd', new Date(task.timestamp));
+				var city = "未知";
+				if (task.position && task.position.city) {
+					city = task.position.city
+				}
+				data.uid = task.id;
+				data.imgPath = task.imagePath;
+				data.title = task.name;
+				data.subTitle = city + "  " + date;
+				data.remark = task.result.material;
+				data.icon = "widget://img/level" + task.result.level + ".png";// + task.level + ".png";
+				datas.push(data);
+
 			}
-		}
-		html += '</p>' +
-			'<p class="my-info clearfix"><span class="info-img"></span><span class="info-wri">' + city + '</span><span class="info-wri info-wri2">' + date + '</span></p>' +
-			'</div>' +
-			'</li>';
-		return html;
+			start += datas.length;
+			if (datas.length == 0){
+				api.toast({
+					msg: '没有更多的任务了'
+				});
+			}
+			callback({
+				data: datas
+			});
+		}, start, limit);
 	}
 </script>

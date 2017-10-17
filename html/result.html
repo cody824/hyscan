@@ -34,10 +34,9 @@
 	</style>
 </head>
 
-<body>
+<body style="position: relative; background:url(../img/main_bg.jpg) no-repeat; background-size:100% 100%; background-attachment: fixed;">
 	<div class="r_banner">
 		<div class="pie" id="pie">
-			<img src="../img/img_pie.png" style="opacity:0" />
 			<div class="r_txt">
 				<span class="p1" id="levelText">正在检测</span>
 				<p class="p2" id="material">…………</p>
@@ -51,7 +50,7 @@
 		<li data-property="rmPacketLine">除去包格线</li>
 	</ul>
 
-	<div class="chart" id="chart" style="height:200px;">
+	<div class="chart" id="chart">
 
 	</div>
 
@@ -213,11 +212,16 @@
 
 	apiready = function() {
 		arcProgress = api.require('arcProgress');
+		var centerX = api.frameWidth / 2;
+        var bHeight = $api.cssVal($api.dom('.r_banner'), 'height');
+        bHeight = bHeight.substring(0, bHeight.indexOf('px'));
+        var centerY = bHeight/2;
+
 		arcProgress.open({
 			type: 'annular ',
-			centerX: api.frameWidth / 6 * (2 * 1 + 1),
-			centerY: $api.cssVal($api.dom('#pie'), 'height'),
-			radius: api.frameWidth / 5,
+			centerX: centerX,
+			centerY: centerY,
+			radius: bHeight/2.5,
 			bgColor: '#005066',
 			pgColor: '#00F9FF',
 			loopWidth: 10,
@@ -490,11 +494,15 @@
 			oldLevelText = "三级老化";
 			color = "#FF6200"
 		}
+		var centerX = api.frameWidth / 2;
+        var bHeight = $api.cssVal($api.dom('.r_banner'), 'height');
+        bHeight = bHeight.substring(0, bHeight.indexOf('px'));
+        var centerY = bHeight/2;
 		arcProgress.open({
 			type: 'annular ',
-			centerX: api.frameWidth / 6 * (2 * 1 + 1),
-			centerY: $api.cssVal($api.dom('#pie'), 'height'),
-			radius: api.frameWidth / 5,
+			centerX: centerX,
+			centerY: centerY,
+			radius: bHeight/2.5,
 			bgColor: '#005066',
 			pgColor: color,
 			loopWidth: 10,

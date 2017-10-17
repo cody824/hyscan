@@ -23,6 +23,7 @@
 
     window.gotoMap = function(){
       api.openWin({
+
           name: 'map',
           url: 'map.html'
       });
@@ -30,6 +31,8 @@
 
     window.gotoMe = function(){
         api.openWin({
+            bounces : true,
+            allowEdit : true,
             reload : true,
             name: 'my',
             url: 'my.html'
