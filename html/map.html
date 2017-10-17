@@ -41,12 +41,8 @@
 
 	function openMap(callback) {
 		map.open({
-			center: {
-				lon: 116.4021310000,
-				lat: 39.9994480000
-			},
 			zoomLevel: 10,
-			//showUserLocation: true,
+			showUserLocation: false,
 			fixedOn: api.frameName,
 			fixed: true
 		}, function(ret, err) {
