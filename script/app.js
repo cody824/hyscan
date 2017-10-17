@@ -28,6 +28,9 @@
         if (fetch) {
             api.ajax({
                 url: globalConfig.serverUrl + "app/modelConfig/",
+                headers : {
+                        Accept : 'application/json'
+                },
                 method: 'get',
             },function(ret, err){
                 if (ret && ret.length > 0) {
