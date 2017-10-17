@@ -66,7 +66,7 @@
 					var task = tasks[i];
 					if (task.position) {
 						var annotation = lonLatTask[task.position.lon + "_" + task.position.lat] || {tasks : []};
-						if(!annotation.id) {
+						if(!annotation.hasOwnProperty("id")) {
 							annotation.id = id++;
 							annotation.lon = task.position.lon;
 							annotation.lat = task.position.lat;
