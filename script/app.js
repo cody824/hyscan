@@ -1,14 +1,14 @@
 (function(window) {
 
-    window.isDev = true;
+    window.isDev = false;
 
     var __config = {};
     __config.models = {};
-    __config.serverUrl = "http://192.168.125.120:9090/";
+    __config.serverUrl = "http://39.106.25.106/";
     __config.login = {
         qq : false,
         wechat : false,
-        weibo : true
+        weibo : false
     }
     window.globalConfig = __config;
 
@@ -24,7 +24,6 @@
         var __appConfig = $api.getStorage('appConfig') ||　{globalConfig : {}}
         if (__appConfig.globalConfig && __appConfig.globalConfig.serverIp && isDev)
             globalConfig.serverUrl = "http://" + __appConfig.globalConfig.serverIp + ":9090/"
-
         if (fetch) {
             api.ajax({
                 url: globalConfig.serverUrl + "app/modelConfig/",
