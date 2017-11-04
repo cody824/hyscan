@@ -170,8 +170,9 @@
             url: globalConfig.serverUrl + "security/auth/getToken/" + type,
             method: 'post',
             headers : {
-                "Content-Type" : 'application/json'
-            },
+				"Content-Type" : 'application/json',
+				"Accept" : 'application/json'
+			},
             data: {
                 body : userInfo
             }

@@ -8,7 +8,7 @@
 	<link rel="stylesheet" type="text/css" href="../css/api.css" />
 	<link rel="stylesheet" type="text/css" href="../css/style.css" />
 	<link rel="stylesheet" type="text/css" href="../css/index.css" />
-	<title>注册</title>
+	<title>忘记密码</title>
 	<style>
 		::-webkit-input-placeholder {
 			/* WebKit browsers */
@@ -39,29 +39,16 @@
 	<img src="../img/login_logo.png" class="logo" />
 	<div class="login_con" style="margin-bottom:3%;">
 		<input id="mobileNum" type="txt" class="name" placeholder="请输入手机号" />
-		<input id="password" type="password" class="pwd" placeholder="请输入密码" />
+		<input id="password" type="password" class="pwd" placeholder="请输入新密码" />
 	</div>
 	<div style="width: 100%; height: auto; position: relative; z-index: 99;">
 		<div class="checknum">
 			<input id="authcode" type="text" placeholder="请输入6位验证码">
 			<p class="nums"><span class="one" id="sendAuthcode">发送验证码</span><span class="two" id="waitToRecive">60s</span></p>
 		</div>
-		<a class="login_btn register" href="javascript:register();">立 即 注 册</a>
-		<a class="back_login" href="javascript:gotoLogin();">已有账号，返回登录</a>
+		<a class="login_btn register" href="javascript:resetPsd();">重设密码</a>
+		<a class="back_login" href="javascript:gotoLogin();">返回登录</a>
 	</div>
-
-	<!-- <div class="login_methods">
-			<span>第三方登录</span>
-			<span>
-				<img src="../img/icon_qq.png" />
-			</span>
-			<span>
-				<img src="../img/icon_wechat.png" />
-			</span>
-			<span>
-				<img src="../img/icon_weibo.png" />
-			</span>
-		</div> -->
 </body>
 
 </html>
@@ -75,7 +62,7 @@
 		});
 	}
 
-	function register() {
+	function resetPsd() {
 		var mobile = $api.val($api.dom('#mobileNum'));
 		var password = $api.val($api.dom('#password'));
 		var authcode =  $api.val($api.dom('#authcode'));
@@ -101,30 +88,27 @@
 			return;
 		}
 		api.ajax({
-		    url: globalConfig.serverUrl + "security/auth/register/mobile?authcode=" + authcode,
+		    url: globalConfig.serverUrl + "security/auth/resetpsd/mobile",
 		    method: 'post',
 			headers : {
-				"Content-Type" : 'application/json',
 				"Accept" : 'application/json'
 			},
 		    data: {
-		        body: {
+		        values: {
+					authcode : authcode,
 		            mobile : mobile,
 					password : password
 		        }
 		    }
 		},function(ret, err){
 		    if (ret) {
-				$api.toast('注册成功', '');
+				$api.toast('重置成功', '');
 		        setTimeout(gotoLogin, 500);
 		    } else {
 				var errMsg = JSON.parse(err.msg);
 		        alert( errMsg.errorMsg);
 		    }
 		});
-
-
-
 	}
 
 	function isMobile(mobile){
@@ -148,6 +132,7 @@
 			method: 'post',
 			headers : {
 				"Accept" : 'application/json'
+			},
 			data: {
 				values: {
 					to: mobile,

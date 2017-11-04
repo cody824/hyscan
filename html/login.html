@@ -43,7 +43,7 @@
 	</div>
 	<div style="width: 100%; height: auto; overflow: hidden; position: relative; z-index: 99;">
 		<a class="login_btn login" id="loginBtn" href="#">登 录</a>
-		<p class="pass_forget"><!--忘记密码？--></p>
+		<p class="pass_forget" id="forgetPsdBtn">忘记密码</p>
 		<a class="login_btn register" href="javascript:gotoRegister();">注 册</a>
 	</div>
 
@@ -74,6 +74,7 @@
 				$api.css($api.dom('#wechat'), 'display:none;')
 			}
 		});
+		var third = 3;
 		var qq = api.require('qq');
 		qq.installed(function(ret, err) {
 			if (ret.status) {} else {
@@ -81,13 +82,20 @@
 			}
 		});
 		if (!globalConfig.login.qq) {
+			third--;
 			$api.css($api.dom('#qq'), 'display:none;')
 		}
 		if (!globalConfig.login.wechat) {
+			third--;
 			$api.css($api.dom('#wechat'), 'display:none;')
 		}
 		if (!globalConfig.login.weibo) {
+			third--;
 			$api.css($api.dom('#weibo'), 'display:none;')
+		}
+
+		if (third == 0) {
+			$api.css($api.dom('.login_methods'), 'display:none;')
 		}
 	}
 
@@ -98,6 +106,15 @@
 			url: './register.html'
 		});
 	}
+
+	$api.addEvt($api.dom('#forgetPsdBtn'), 'click', function(){
+		api.openWin({
+			reload: true,
+			name: 'forgetPsd',
+			url: './forgetPsd.html'
+		});
+	});
+
 
 	$api.addEvt($api.dom("#weibo"), 'click', function() {
 		var weibo = api.require('weibo');
