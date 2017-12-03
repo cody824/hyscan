@@ -39,6 +39,12 @@
 			<span class="ico-name">光谱定标设置</span>
 			<span class="ico-info"></span>
 		</li>
+		<li class="clearfix kg" id="lightSetupLi">
+		   <span class="small-ico ico5"></span>
+		   <span class="ico-name">光源开关</span>
+		   <span class="btn special lightOff">关闭</span>
+		   <span class="btn lightOn">开启</span>
+	   </li>
 		<li class="clearfix" id='serverIpSetupLi' style="display:none;">
 			<span class="small-ico ico1"></span>
 			<span class="ico-name">服务器地址</span>
@@ -162,6 +168,30 @@
 		var serverIp = $api.text($api.dom('#serverIp'));
 		setupServerIp(serverIp);
 	});
+
+	$api.addEvt($api.dom('#lightSetupLi .lightOn'), 'click', function() {
+		if (appConfig.device){
+			hyCmd.lightOn(appConfig.device.address);
+		} else {
+			api.alert({
+			    title: '设备未连接',
+			    msg: '请连接设备',
+			});
+		}
+
+	});
+
+	$api.addEvt($api.dom('#lightSetupLi .lightOff'), 'click', function() {
+		if (appConfig.device){
+			hyCmd.lightOff(appConfig.device.address);
+		} else {
+			api.alert({
+			    title: '设备未连接',
+			    msg: '请连接设备',
+			});
+		}
+	});
+
 
 	function setupCollectNum(current) {
 		dialogBox.input({

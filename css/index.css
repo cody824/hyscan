@@ -1005,6 +1005,11 @@ input:focus {
 	background-size: 33px 32px;
 	background-position-y: center;
 }
+.set-box .ico5 {
+	background: url(../img/icon_setting05.png) no-repeat;
+	background-size: 33px 32px;
+	background-position-y: center;
+}
 .set-box .ico-name {
 	color: #333333;
 	font-weight: 500;
@@ -1025,7 +1030,7 @@ input:focus {
 	margin-right: 23%;
 	color: #333333;
 }
-.set-box .btn {
+/*.set-box .btn {
 	float: right;
 	width: 20%;
 	color: #ffffff;
@@ -1033,7 +1038,22 @@ input:focus {
 	background: #ed5e3c;
 	border-radius: 5px;
 	font-size: 16px;
+}*/
+.set-box .btn {
+	float: right;
+	width: 20%;
+	color: #ffffff;
+	text-align: center;
+	background:#4fd35e;
+	border-radius: 5px;
+	font-size: 16px;
 }
+.set-box .btn.special{
+	margin-left:20px;
+	background: #189abf;
+}
+
+
 /* 连接设备  */
 
 .state{
