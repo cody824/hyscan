@@ -231,6 +231,7 @@
 
         sendTaskToRemote: function(task, callback) {
             console.log("发送任务到服务器");
+            task.appId = appId;
             api.ajax({
                 url: globalConfig.serverUrl + "app/scanTask/",
                 method: 'post',

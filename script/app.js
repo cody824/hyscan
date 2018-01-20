@@ -1,6 +1,7 @@
 (function(window) {
 
     window.isDev = false;
+    window.appId = "material";
 
     var __config = {};
     __config.models = {};
